@@ -47,7 +47,7 @@ function getOrderStatus($status)
     switch ($status) {
         case 0:
             // Jika status 0, maka tampilkan label "New"
-            return '<span class="badge bg-label-warning">New</span>';
+            return '<span class="badge bg-label--warning>Baru</span>';
         case 1:
             // Jika status 1, maka tampilkan label "Picked Up"
             return '<span class="badge bg-label-success">Picked Up</span>';
