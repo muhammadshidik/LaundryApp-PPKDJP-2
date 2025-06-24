@@ -17,16 +17,16 @@ $rowDashboard = mysqli_fetch_array($queryDashboard);
 </style>
 
 <div class="card">
-    <div class="card-header">
+    <div class="card-header ">
         <h5>Dashboard</h5>
     </div>
     <div class="card-body d-flex align-items-center justify-content-center gap-3">
         <div class="row">
             <div class="col-sm-12 mb-5" align="center">
-                <img src="img/logo/logo3.png" alt="">
+                <img src="admin/img/logo/logo.png" alt="">
             </div>
             <div class="col-sm-12" align="center">
-                <h2>Konnichiwa, <?= $rowDashboard['username'] ?> San !</h2>
+                <h2>Assalamualaikum Ya habibi, <?= $rowDashboard['username'] ?>!</h2>
             </div>
         </div>
     </div>

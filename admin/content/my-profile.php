@@ -20,11 +20,11 @@ if (isset($_POST['edit'])) {
             header("Location: ?page=my-profile&edit=errorExtension");
             die;
         } else {
-            if (file_exists('img/profile_picture/' . $rowEdit['profile_picture'])) {
-                unlink('img/profile_picture/' . $rowEdit['profile_picture']);
+            if (file_exists('admin/img/profile_picture/' . $rowEdit['profile_picture'])) {
+                unlink('admin/img/profile_picture/' . $rowEdit['profile_picture']);
             }
             $new_image_name = "profile_picture" . $idEdit . "." . $img_ext;
-            move_uploaded_file($_FILES['photo']['tmp_name'], 'img/profile_picture/' . $new_image_name);
+            move_uploaded_file($_FILES['photo']['tmp_name'], 'admin/img/profile_picture/' . $new_image_name);
             $queryEdit = mysqli_query($connection, "UPDATE user SET username='$username', email='$email', profile_picture='$new_image_name' WHERE id='$idEdit'");
         }
     }
@@ -34,12 +34,6 @@ if (isset($_POST['edit'])) {
 }
 
 $queryLevel = mysqli_query($connection, "SELECT * FROM level");
-
-// if ((isset($_GET['pg']) == 'my-profile') && (isset($_GET['edit']) == 'success')) {
-//     header('location: ?page=my-profile');
-//     die;
-// }
-
 ?>
 
 <div class="card shadow">
@@ -59,7 +53,7 @@ $queryLevel = mysqli_query($connection, "SELECT * FROM level");
             </div>
         <?php endif ?>
         <img width="150px"
-            src="<?= !empty($rowEdit['profile_picture']) && file_exists('img/profile_picture/' . $rowEdit['profile_picture']) ? 'img/profile_picture/' . $rowEdit['profile_picture'] : 'https://placehold.co/100' ?>"
+            src="<?= !empty($rowEdit['profile_picture']) && file_exists('admin/img/profile_picture/' . $rowEdit['profile_picture']) ? 'img/profile_picture/' . $rowEdit['profile_picture'] : 'https://placehold.co/100' ?>"
             alt="" class="mt-4 rounded">
         <hr>
         <form action="" method="post" enctype="multipart/form-data">
@@ -86,19 +80,6 @@ $queryLevel = mysqli_query($connection, "SELECT * FROM level");
                         <?php endwhile ?>
                     </select>
                 </div>
-                <?php if ($rowEdit['id_level'] == 2) : ?>
-                    <div class="col-sm-6 mb-3">
-                        <label for="email" class="form-label">Jurusan</label>
-                        <select class="form-control" name="id_jurusan" id="" disabled="true">
-                            <option value=""> -- Add Jurusan -- </option>
-                            <?php while ($rowJurusan = mysqli_fetch_assoc($queryJurusan)) : ?>
-                                <option value="<?= $rowJurusan['id'] ?>"
-                                    <?= isset($rowEdit['id_jurusan']) && ($rowJurusan['id'] == $rowEdit['id_jurusan']) ? 'selected' : '' ?>>
-                                    <?= $rowJurusan['nama_jurusan'] ?></option>
-                            <?php endwhile ?>
-                        </select>
-                    </div>
-                <?php endif ?>
                 <div class="col-sm-6 mb-3">
                     <label for="photoProfile" class="form-label">Foto Profil</label>
                     <input type="file" class="form-control" id="profile_picture" name="photo">

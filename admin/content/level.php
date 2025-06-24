@@ -44,10 +44,5 @@ $queryData = mysqli_query($connection, "SELECT * FROM level ORDER BY id ASC");
                 ?>
             </tbody>
         </table>
-        <div class="mt-4" align="right">
-            <span class="me-4"><i class="bx bx-plus"></i> = Add</span>
-            <span class="me-4"><i class="bx bx-edit"></i> = Edit</span>
-            <span><i class="bx bx-trash"></i> = Delete</span>
-        </div>
     </div>
 </div>

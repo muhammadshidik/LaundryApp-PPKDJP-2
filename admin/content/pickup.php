@@ -40,7 +40,7 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
                             <a href="?page=add-pickup&view=<?php echo $rowData['id'] ?>">
                                 <button class="btn btn-secondary btn-sm">
                                     <?php if ($rowData['order_status'] == 0) : ?>
-                                        <i class="tf-icon bx bx-package bx-22px"></i>
+                                        <i class="tf-icon bx bx-package bx-22px">View</i>
                                     <?php elseif ($rowData['order_status'] == 1) : ?>
                                         <i class="tf-icon bx bx-show bx-22px">View</i>
                                     <?php endif ?>

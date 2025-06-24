@@ -1,3 +1,11 @@
+ <?php
+// getting account data
+$idNav = $_SESSION['id'];
+$queryNav = mysqli_query($connection, "SELECT user.*, level.level_name FROM user LEFT JOIN level ON user.id_level = level.id WHERE user.id = '$idNav'");
+$rowNav  = mysqli_fetch_array($queryNav);
+?>
+
+
 <nav
             class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom"
           >
@@ -302,14 +310,14 @@
                   >
                     <div class="avatar-sm">
                       <img
-                        src="template/assets/img/profile.jpg"
+                        src="<?= !empty($rowNav['profile_picture']) && file_exists('admin/img/profile_picture/' . $rowNav['profile_picture']) ? 'admin/img/profile_picture/' . $rowNav['profile_picture'] : 'https://placehold.co/100' ?> "
                         alt="..."
                         class="avatar-img rounded-circle"
                       />
                     </div>
                     <span class="profile-username">
                       <span class="op-7">Hi,</span>
-                      <span class="fw-bold">Hizrian</span>
+                      <span class="fw-bold"><?= isset($rowNav['username']) ? $rowNav['username'] : '-- your name --' ?></span>
                     </span>
                   </a>
                   <ul class="dropdown-menu dropdown-user animated fadeIn">
@@ -318,16 +326,16 @@
                         <div class="user-box">
                           <div class="avatar-lg">
                             <img
-                              src="template/assets/img/profile.jpg"
+                              src="<?= !empty($rowNav['profile_picture']) && file_exists('admin/img/profile_picture/' . $rowNav['profile_picture']) ? 'admin/img/profile_picture/' . $rowNav['profile_picture'] : 'https://placehold.co/100' ?> "
                               alt="image profile"
                               class="avatar-img rounded"
                             />
                           </div>
                           <div class="u-text">
-                            <h4>Hizrian</h4>
-                            <p class="text-muted">hello@example.com</p>
+                            <h4><?= isset($rowNav['username']) ? $rowNav['username'] : '-- your name --' ?></h4>
+                            <p class="text-muted"><?= isset($rowNav['email']) ? $rowNav['email'] : '-- your name --' ?></p>
                             <a
-                              href="profile.html"
+                              href="?page=my-profile"
                               class="btn btn-xs btn-secondary btn-sm"
                               >View Profile</a
                             >
@@ -342,7 +350,7 @@
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="#">Account Setting</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">Logout</a>
+                        <a class="dropdown-item" href="login.php">Logout</a>
                       </li>
                     </div>
                   </ul>

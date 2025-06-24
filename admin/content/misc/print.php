@@ -1,5 +1,5 @@
 <?php
-include 'admin/controller/koneksi.php';
+include '../../controller/koneksi.php';
 
 $id = isset($_GET['order']) ? $_GET['order'] : '';
 $queryOrder = mysqli_query($connection, "SELECT trans_order.*, customer.customer_name , trans_laundry_pickup.pickup_date 

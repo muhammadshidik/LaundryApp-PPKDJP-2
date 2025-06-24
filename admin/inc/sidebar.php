@@ -34,18 +34,23 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
         <div class="sidebar-wrapper scrollbar scrollbar-inner">
           <div class="sidebar-content">
             <ul class="nav nav-secondary">
-              <li class="nav-item active <?= !isset($_GET['page']) || ($_GET['page'] == 'dashboard') ? 'active' : '' ?>   ">
-                <a
-                  data-bs-toggle="collapse"
-                  href="?page=dashboard"
-                  class="collapsed"
-                  aria-expanded="false"
-                >
+               <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#sidebarLayouts">
                   <i class="fas fa-home"></i>
                   <p>Dashboard</p>
                   <span class="caret"></span>
                 </a>
+                <div class="collapse" id="sidebarLayouts">
+                  <ul class="nav nav-collapse">
+                    <li   <?= !isset($_GET['page']) || ($_GET['page'] == 'dashboard') ? 'active' : '' ?>  >
+                      <a href="?page=dashboard">
+                        <span class="sub-item">Dashboard</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
               </li>
+          
               <li class="nav-section">
                 <span class="sidebar-mini-icon">
                   <i class="fa fa-ellipsis-h"></i>
@@ -107,7 +112,7 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
                   </ul>
                 </div>
               </li>
-                
+
                <?php elseif ($dataNavbar['id_level'] == 3) : ?>
               <li class="nav-item">
                 <a data-bs-toggle="collapse" href="#sidebarLayouts">
@@ -117,17 +122,14 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
                 </a>
                 <div class="collapse" id="sidebarLayouts">
                   <ul class="nav nav-collapse">
-                    <li <?= (isset($_GET['page']) && ($_GET['page'] == 'report' || $_GET['page'] == 'add-report')) ? 'active' : '' ?>">
-            <a class="sidebar-link justify-content-between ">
-                      <a href="sidebar-style-2.html">
+                    <li <?= (isset($_GET['page']) && ($_GET['page'] == 'report' || $_GET['page'] == 'add-report')) ? 'active' : '' ?>>
+                      <a href="?page=report">
                         <span class="sub-item">Report</span>
                       </a>
                     </li>
                   </ul>
                 </div>
               </li>
-                </div>
-            </ul>
             <?php endif ?>
           </div>
         </div>
