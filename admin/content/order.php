@@ -11,7 +11,7 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
     <div class="card-body">
         <?php include 'admin/controller/alert-data-crud.php' ?>
         <div align="right" class="button-action">
-            <a href="?page=add-order" class="btn btn-primary"><i class='bx bx-plus'></i></a>
+            <a href="?page=add-order" class="btn btn-primary btn-sm"><i class='bx bx-plus'>Tambah Order</i></a>
         </div>
         <table class="table table-bordered table-striped table-hover table-responsive mt-3">
             <thead>
@@ -39,14 +39,14 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
                         <td><?= $statusOrder ?></td>
                         <td>
                             <a href="?page=add-order&view=<?php echo $rowData['id'] ?>">
-                                <button class="btn btn-secondary">
-                                    <i class="tf-icon bx bx-show bx-22px"></i>
+                                <button class="btn btn-secondary btn-sm">
+                                    <i class="tf-icon bx bx-show bx-22px">View</i>
                                 </button>
                             </a>
                             <a onclick="return confirm ('Apakah anda yakin akan menghapus data ini?')"
                                 href="?page=add-order&delete=<?php echo $rowData['id'] ?>">
-                                <button class="btn btn-danger">
-                                    <i class="tf-icon bx bx-trash bx-22px"></i>
+                                <button class="btn btn-danger btn-sm">
+                                    <i class="tf-icon bx bx-trash bx-22px">Delete</i>
                                 </button>
                             </a>
                         </td>
@@ -55,10 +55,5 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
                 ?>
             </tbody>
         </table>
-        <div class="mt-4" align="right">
-            <span class="me-4"><i class="bx bx-plus"></i> = Add</span>
-            <span class="me-4"><i class="bx bx-show"></i> = Detail</span>
-            <span><i class="bx bx-trash"></i> = Delete</span>
-        </div>
     </div>
 </div>

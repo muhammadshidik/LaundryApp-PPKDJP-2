@@ -2,63 +2,71 @@
 require_once 'admin/controller/koneksi.php';
 include 'admin/controller/operator-validation.php';
 
-// get order code
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+// --- LOGIKA PHP UNTUK PROSES DATA (CREATE, VIEW, DELETE) ---
+
+// Logika untuk generate order code
 $getOrderCodeQuery = mysqli_query($connection, "SELECT id FROM trans_order ORDER BY id DESC LIMIT 1");
 $getorderCodeID = mysqli_fetch_assoc($getOrderCodeQuery);
-if (mysqli_num_rows($getOrderCodeQuery) > 0) {
-    $orderCodeID = $getorderCodeID['id'] + 1;
-} else {
-    $orderCodeID = 0;
-}
-$orderCode = "LNDRY-" . date('YmdHis') . $orderCodeID + 1;
+$orderCodeID = (mysqli_num_rows($getOrderCodeQuery) > 0) ? $getorderCodeID['id'] + 1 : 1;
+$orderCode = "LNDRY-" . date('YmdHis') . $orderCodeID;
 
+// Logika saat form disubmit untuk MENAMBAH order
 if (isset($_POST['add_order'])) {
+    // var_dump($_POST); die(); // (Untuk debug, hapus jika sudah ok)
+
     $id_customer = $_POST['id_customer'];
     $order_code = $_POST['order_code'];
     $order_date = $_POST['order_date'];
     $order_end_date = $_POST['order_end_date'];
-    $order_status = $_POST['order_status'];
+    $order_status = $_POST['order_status']; // <-- Nilai ini sekarang pasti terkirim
     $total_price = $_POST['total_price'];
-    $id_service = $_POST['id_service'];
-
+    
+    // Insert ke tabel utama
     $insert_trans_order = mysqli_query($connection, "INSERT INTO trans_order (id_customer, order_code, order_date, order_end_date, order_status, total_price) VALUES ('$id_customer', '$order_code', '$order_date', '$order_end_date', '$order_status', '$total_price')");
     $trans_order_id = mysqli_insert_id($connection);
 
-    foreach ($id_service as $key => $value) {
-        // $id_service = array_filter($_POST['id_service']);
-        // $qty = array_filter($_POST['qty']);
-        $id_service = $_POST['id_service'][$key];
-        $qty = $_POST['qty'][$key];
-        $subtotal = $_POST['subtotal'][$key];
+    // Insert ke tabel detail
+    if (isset($_POST['id_service'])) {
+        foreach ($_POST['id_service'] as $key => $id_service) {
+            $qty = $_POST['qty'][$key];
+            $subtotal = $_POST['subtotal'][$key];
 
-        $insert_trans_order_detail = mysqli_query($connection, "INSERT INTO trans_order_detail (id_order, id_service, qty, subtotal) VALUES ('$trans_order_id', '$id_service', '$qty', '$subtotal')");
+            mysqli_query($connection, "INSERT INTO trans_order_detail (id_order, id_service, qty, subtotal) VALUES ('$trans_order_id', '$id_service', '$qty', '$subtotal')");
+        }
     }
-
+    
+    // Alihkan kembali ke halaman daftar order dengan notifikasi sukses
     header("Location:?page=order&add=success");
     die;
-} else if (isset($_GET['view'])) {
-    // trans order data
+
+} else if (isset($_GET['view'])) { // Logika untuk MELIHAT detail
     $idView = $_GET['view'];
     $queryView = mysqli_query($connection, "SELECT trans_order.*, customer.customer_name, customer.phone, customer.address FROM trans_order LEFT JOIN customer ON trans_order.id_customer = customer.id WHERE trans_order.id = '$idView'");
     $rowView = mysqli_fetch_assoc($queryView);
 
-    // trans order detail data
     $orderViewID = $rowView['id'];
     $queryOrderList = mysqli_query($connection, "SELECT trans_order_detail.*, type_of_service.* FROM trans_order_detail LEFT JOIN type_of_service ON trans_order_detail.id_service = type_of_service.id WHERE trans_order_detail.id_order = '$orderViewID'");
-} else if (isset($_GET['delete'])) {
+
+} else if (isset($_GET['delete'])) { // Logika untuk MENGHAPUS
     $idDelete = $_GET['delete'];
-    $queryDelete = mysqli_query($connection, "DELETE FROM trans_order WHERE id='$idDelete'");
-    $queryDeleteDetail = mysqli_query($connection, "DELETE FROM trans_order_detail WHERE id_order='$idDelete'");
-    $queryDeletePickup = mysqli_query($connection, "DELETE FROM trans_laundry_pickup WHERE id_order = '$idDelete'");
+    mysqli_query($connection, "DELETE FROM trans_order WHERE id='$idDelete'");
+    // Detail dan pickup akan terhapus otomatis jika Anda set ON DELETE CASCADE di database
+    // Jika tidak, query di bawah ini diperlukan
+    // mysqli_query($connection, "DELETE FROM trans_order_detail WHERE id_order='$idDelete'");
+    // mysqli_query($connection, "DELETE FROM trans_laundry_pickup WHERE id_order = '$idDelete'");
     header("Location:?page=order&delete=success");
     die;
 }
 
-
+// Query untuk mengisi dropdown di form
 $queryService = mysqli_query($connection, "SELECT * FROM type_of_service");
-$queryCustomer = mysqli_query($connection,  "SELECT * FROM customer");
-?>
+$queryCustomer = mysqli_query($connection, "SELECT * FROM customer");
 
+// --- TAMPILAN HTML (VIEW ATAU FORM) ---
+?>
 <?php if (isset($_GET['view'])) : ?>
     <div class="row">
         <div class="col-sm-6">
@@ -117,7 +125,8 @@ $queryCustomer = mysqli_query($connection,  "SELECT * FROM customer");
             </div>
         </div>
     </div>
-    <div class="card shadow mt-3">
+
+      <div class="card shadow mt-3">
         <div class="card-header">
             <h4>Order List</h4>
         </div>
@@ -159,22 +168,22 @@ $queryCustomer = mysqli_query($connection,  "SELECT * FROM customer");
             </div>
         </div>
     </div>
-<?php else : ?>
+    <?php else : ?>
+        
     <form action="" method="post">
+        <input type="hidden" name="order_status" value="0">
+
         <div class="card shadow">
-            <div class="card-header">
-                <h3>Add Order</h3>
-            </div>
-            <div class="card-body">
+             <div class="card-header"><h3>Add Order</h3></div>
+             <div class="card-body">
                 <div class="row">
                     <div class="col-sm-6 mb-3">
-                        <label for="" class="form-label">Order Code</label>
-                        <input type="text" class="form-control" id="" name="order_code" placeholder="Enter phone number"
-                            value="<?= $orderCode ?>" readonly>
+                        <label class="form-label">Order Code</label>
+                        <input type="text" class="form-control" name="order_code" value="<?= $orderCode ?>" readonly>
                     </div>
                     <div class="col-sm-6 mb-3">
-                        <label for="" class="form-label">Customer Name</label>
-                        <select name="id_customer" id="" class="form-control">
+                        <label class="form-label">Customer Name</label>
+                        <select name="id_customer" class="form-control" required>
                             <option value="">-- choose customer --</option>
                             <?php while ($rowCustomer = mysqli_fetch_assoc($queryCustomer)) : ?>
                                 <option value="<?= $rowCustomer['id'] ?>"><?= $rowCustomer['customer_name'] ?></option>
@@ -182,40 +191,44 @@ $queryCustomer = mysqli_query($connection,  "SELECT * FROM customer");
                         </select>
                     </div>
                     <div class="col-sm-6 mb-3">
-                        <label for="" class="form-label">Order Date</label>
-                        <input type="date" class="form-control" name="order_date">
+                        <label class="form-label">Order Date</label>
+                        <input type="date" class="form-control" name="order_date" required>
                     </div>
                     <div class="col-sm-6 mb-3">
-                        <label for="" class="form-label">Order Date</label>
-                        <input type="date" class="form-control" name="order_end_date">
+                        <label class="form-label">Order End Date</label>
+                        <input type="date" class="form-control" name="order_end_date" required>
                     </div>
-
                 </div>
-            </div>
+             </div>
         </div>
 
         <div class="card shadow mt-3">
             <div class="card-body">
                 <div class="row">
                     <div class="col-sm-6 mb-3">
-                        <label for="" class="form-label">Service</label>
+                        <label class="form-label">Service</label>
                         <select name="id_service" class="form-control" id="selected_service">
-                            <option value="">-- choose service --</option>
-                            <?php while ($rowService = mysqli_fetch_assoc($queryService)): ?>
-                                <option value="<?= $rowService['id'] ?>"><?= $rowService['service_name'] ?></option>
-                            <?php endwhile ?>
-                        </select>
+                        <option value="">-- choose service --</option>
+                        <?php 
+                        // Reset pointer query untuk looping lagi jika diperlukan di tempat lain
+                        mysqli_data_seek($queryService, 0); 
+                        while ($rowService = mysqli_fetch_assoc($queryService)): 
+                        ?>
+                            <option value="<?= $rowService['id'] ?>" data-price="<?= $rowService['price'] ?>">
+                                <?= $rowService['service_name'] ?>
+                            </option>
+                        <?php endwhile ?>
+                    </select>
                     </div>
-                    <input type="hidden" id="price">
                     <div class="col-sm-6 mb-3">
-                        <label for="" class="form-label">Quantity (per gram)</label>
-                        <input type="number" class="form-control" name="qty" placeholder="Enter quantity" id="selected_qty">
+                        <label class="form-label">Quantity (per gram)</label>
+                        <input type="number" class="form-control" placeholder="Enter quantity" id="selected_qty">
                     </div>
                 </div>
                 <hr>
                 <div class="mb-3" align="right">
-                    <button class="btn btn-secondary" id="add_row_order">
-                        <i class="bx bx-plus"></i>
+                    <button type="button" class="btn btn-secondary" id="add_row_order">
+                        <i class="bx bx-plus"></i> Tambah ke Keranjang
                     </button>
                 </div>
                 <table class="table table-responsive table-bordered table-striped mb-3">
@@ -223,29 +236,27 @@ $queryCustomer = mysqli_query($connection,  "SELECT * FROM customer");
                         <tr>
                             <th>Service Name</th>
                             <th>Price</th>
-                            <th>Quantity (per gram)</th>
+                            <th>Quantity (gram)</th>
                             <th>Subtotal</th>
                         </tr>
                     </thead>
                     <tbody id="order_table">
-                    </tbody>
+                        </tbody>
                     <tfoot>
                         <tr>
                             <td colspan="3" align="right"><strong>Total Price</strong></td>
                             <td>
-                                <input type="text" id="total_price_formatted" style="border: none; outline: none;"
-                                    class="form-control" readonly>
+                                <input type="text" id="total_price_formatted" class="form-control" style="border: none; background: transparent; font-weight: bold;" readonly>
                                 <input type="hidden" name="total_price" id="total_price" readonly>
                             </td>
                         </tr>
                     </tfoot>
                 </table>
-                <input type="hidden" name="order_status" value="0">
                 <div align="right">
                     <a href="?page=order" class="btn btn-secondary">Back</a>
-                    <button class="btn btn-primary" type="submit" name="add_order">Add</button>
+                    <button class="btn btn-primary" type="submit" name="add_order">Simpan Order</button>
                 </div>
             </div>
         </div>
     </form>
-<?php endif ?>
+    <?php endif?>

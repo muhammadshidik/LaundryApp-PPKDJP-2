@@ -42,17 +42,31 @@ function loginValidation()
 }
 
 // Fungsi untuk mengubah nilai status order menjadi label HTML
-function getOrderStatus($status)
-{
-    switch ($status) {
+// Letakkan fungsi ini di file koneksi.php atau file fungsi utama Anda
+
+
+// ... ini adalah kode koneksi database Anda yang sudah ada ...
+// ... mysqli_connect(...) ...
+
+
+// ===============================================================
+// PASTE FUNGSI LENGKAP INI DI DALAM FILE koneksi.php ANDA
+// ===============================================================
+function getOrderStatus($status_code) {
+    switch ($status_code) {
         case 0:
-            // Jika status 0, maka tampilkan label "New"
-            return '<span class="badge bg-label--warning>Baru</span>';
+            return '<span class="badge bg-primary">Baru</span>';
         case 1:
-            // Jika status 1, maka tampilkan label "Picked Up"
-            return '<span class="badge bg-label-success">Picked Up</span>';
+            return '<span class="badge bg-info">Diproses</span>';
+        case 2:
+            return '<span class="badge bg-warning text-dark">Siap Diambil</span>';
+        case 3:
+            return '<span class="badge bg-success">Selesai</span>';
+        case 4:
+            return '<span class="badge bg-danger">Dibatalkan</span>';
         default:
-            // Jika status tidak dikenal, tampilkan "Unknown Status"
-            return '<span class="badge bg-label-secondary">Unknown Status</span>';
+            return '<span class="badge bg-secondary">Tidak Diketahui</span>';
     }
 }
+
+?>
