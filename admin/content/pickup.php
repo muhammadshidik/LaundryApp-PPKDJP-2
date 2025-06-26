@@ -47,7 +47,7 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
                                 </button>
                             </a>
                             <?php if ($rowData['order_status'] == 1) : ?>
-                                <a href="content/misc/print.php?order=<?= $rowData['id'] ?>" target="_blank">
+                                <a href="admin/content/misc/print.php?order=<?= $rowData['id'] ?>" target="_blank">
                                     <button class="btn btn-secondary btn-sm">
                                         <i class="tf-icon bx bx-printer bx-22px">Print</i>
                                     </button>

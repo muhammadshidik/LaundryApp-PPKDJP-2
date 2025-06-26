@@ -53,7 +53,7 @@ if (isset($_POST['login'])) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Flexy Free Bootstrap Admin Template by WrapPixel</title>
+  <title>Login | Laundry App</title>
   <link rel="shortcut icon" type="image/png" href="tmp/assets/images/logos/favicon.png" />
   <link rel="stylesheet" href="template/assets/css/styles.min.css" />
 </head>
@@ -69,6 +69,7 @@ if (isset($_POST['login'])) {
           <div class="col-md-8 col-lg-6 col-xxl-3">
             <div class="card mb-0">
               <div class="card-body">
+                <center><h3>Login</h3></center>
                 <a href="./index.html" class="text-nowrap logo-img text-center d-block py-3 w-100">
                   <img src="tmp/assets/images/logos/logo.svg" alt="">
                 </a>

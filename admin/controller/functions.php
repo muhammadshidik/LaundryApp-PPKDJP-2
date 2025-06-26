@@ -57,13 +57,7 @@ function getOrderStatus($status_code) {
         case 0:
             return '<span class="badge bg-primary">Baru</span>';
         case 1:
-            return '<span class="badge bg-info">Diproses</span>';
-        case 2:
-            return '<span class="badge bg-warning text-dark">Siap Diambil</span>';
-        case 3:
-            return '<span class="badge bg-success">Selesai</span>';
-        case 4:
-            return '<span class="badge bg-danger">Dibatalkan</span>';
+            return '<span class="badge bg-info">Selesai</span>';
         default:
             return '<span class="badge bg-secondary">Tidak Diketahui</span>';
     }

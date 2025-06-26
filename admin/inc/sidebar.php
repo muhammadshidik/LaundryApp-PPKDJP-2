@@ -42,7 +42,7 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
                 </a>
                 <div class="collapse" id="sidebarLayouts">
                   <ul class="nav nav-collapse">
-                    <li   <?= !isset($_GET['page']) || ($_GET['page'] == 'dashboard') ? 'active' : '' ?>  >
+                    <li  <?= !isset($_GET['page']) || ($_GET['page'] == 'dashboard') ? 'active' : '' ?>  >
                       <a href="?page=dashboard">
                         <span class="sub-item">Dashboard</span>
                       </a>
@@ -50,7 +50,6 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
                   </ul>
                 </div>
               </li>
-          
               <li class="nav-section">
                 <span class="sidebar-mini-icon">
                   <i class="fa fa-ellipsis-h"></i>
