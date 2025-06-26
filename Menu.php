@@ -81,7 +81,6 @@ if (empty($_SESSION['id'])) {
               include 'admin/content/dashboard.php';
             }
             ?>
-
       <!-- batas sampe sini -->
             </div>
           </div>

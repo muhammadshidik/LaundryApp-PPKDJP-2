@@ -1,6 +1,6 @@
 <?php if (isset($_GET['edit']) && $_GET['edit'] == 'success'): ?>
 <div class="alert alert-success alert-dismissible" role="alert">
-    Data Berhasil Diubah !.
+    Perubahan berhasil disimpan.
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 <?php elseif (isset($_GET['delete']) && $_GET['delete'] == 'success'): ?>
@@ -10,7 +10,7 @@
 </div>
 <?php elseif (isset($_GET['add']) && $_GET['add'] == 'success'): ?>
 <div class="alert alert-success alert-dismissible" role="alert">
-    Data Berhasil Di Ditambahkan !.
+   Data berhasil disimpan.
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 <?php elseif (isset($_GET['pickup']) && $_GET['pickup'] == 'success'): ?>
