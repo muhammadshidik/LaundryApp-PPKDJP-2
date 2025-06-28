@@ -333,6 +333,7 @@ $rowNav  = mysqli_fetch_array($queryNav);
                           </div>
                           <div class="u-text">
                             <h4><?= isset($rowNav['username']) ? $rowNav['username'] : '-- your name --' ?></h4>
+                            <h4> <?php isset($rowNav['level_name']) ? $rowNav['level_name'] : '' ?></h4>
                             <p class="text-muted"><?= isset($rowNav['email']) ? $rowNav['email'] : '-- your name --' ?></p>
                             <a
                               href="?page=my-profile"

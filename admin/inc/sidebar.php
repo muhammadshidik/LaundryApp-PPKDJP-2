@@ -3,6 +3,7 @@
 $navbarID = $_SESSION['id'];
 $queryNavbar = mysqli_query($connection, "SELECT * FROM user WHERE id = '$navbarID'");
 $dataNavbar = mysqli_fetch_assoc($queryNavbar);
+
 ?>
 
 <div class="sidebar" data-background-color="dark">
@@ -70,7 +71,10 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
                                     <a href="?page=customer"><span class="sub-item">Customer</span></a>
                                 </li>
                                 <li <?= (isset($_GET['page']) && in_array($_GET['page'], ['service', 'add-service'])) ? 'class="active"' : '' ?>>
-                                    <a href="?page=service"><span class="sub-item">Service</span></a>
+                                     <a href="?page=service"><span class="sub-item">Service</span></a>
+                                </li>
+                                <li <?= (isset($_GET['page']) && in_array($_GET['page'], ['pengeluaran', 'add-pengeluaran'])) ? 'class="active"' : '' ?>>
+                                    <a href="?page=pengeluaran"><span class="sub-item">Data Pengeluaran</span></a>
                                 </li>
                             </ul>
                         </div>
@@ -80,7 +84,7 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
                         <a data-bs-toggle="collapse" href="#operatorMenu">
                             <i class="fas fa-th-list"></i>
                             <p>Operator</p>
-                            <span class="caret"></span>
+                            <span class="caret"></span> 
                         </a>
                         <div class="collapse" id="operatorMenu">
                             <ul class="nav nav-collapse">
@@ -112,4 +116,4 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
             </ul>
         </div>
     </div>
-</div>
+                </div>
