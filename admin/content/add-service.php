@@ -33,36 +33,36 @@ if (isset($_GET['delete'])) {
 
 <div class="card shadow">
     <div class="card-header">
-        <h3><?= isset($_GET['edit']) ? 'Edit' : 'Add' ?> Service</h3>
+        <h5><?= isset($_GET['edit']) ? 'Edit' : 'Add' ?> Service</h5>
     </div>
     <div class="card-body">
         <form action="" method="post">
             <div class="row">
                 <div class="col-sm-6 mb-3">
-                    <label for="" class="form-label">Service Name</label>
-                    <input type="text" class="form-control" id="" name="service_name" placeholder="Enter service name"
+                    <label for="" class="form-label">Nama Service</label>
+                    <input type="text" class="form-control" id="" name="service_name" placeholder="Masukkan Nama Service"
                         value="<?= isset($_GET['edit']) ? $rowEdit['service_name'] : '' ?>" required>
                 </div>
                 <div class="col-sm-6 mb-3">
-                    <label for="" class="form-label">Price/Kg</label>
+                    <label for="" class="form-label">Harga/Kg</label>
                     <div class="input-group">
                         <span class="input-group-text" id="basic-addon1">Rp</span>
                         <input type="number" name="price" class="form-control"
-                            placeholder="Enter service price"
+                            placeholder="Masukkan Harga.."
                             value="<?= isset($_GET['edit']) ? $rowEdit['price'] : '' ?>">
                     </div>
                 </div>
                 <div class="col-sm-6 mb-3">
-                    <label for="" class="form-label">Description</label>
+                    <label for="" class="form-label">Deskripsi</label>
                     <textarea name="description" id="" class="form-control"
-                        placeholder="Enter service description"><?= isset($_GET['edit']) ? $rowEdit['description'] : '' ?></textarea>
+                        placeholder="Masukkan Deskripsi"><?= isset($_GET['edit']) ? $rowEdit['description'] : '' ?></textarea>
                 </div>
             </div>
-            <div class="" align="right">
-                <a href="?page=service" class="btn btn-secondary">Back</a>
-                <button type="submit" class="btn btn-primary"
+            <div class="" align="left">
+                <a href="?page=service" class="btn btn-secondary btn-sm">Kembali</a>
+                <button type="submit" class="btn btn-primary btn-sm"
                     name="<?php echo isset($_GET['edit']) ? 'edit' : 'add' ?>">
-                    <?php echo isset($_GET['edit']) ? 'Edit' : 'Add' ?>
+                    <?php echo isset($_GET['edit']) ? 'Simpan' : 'Simpan' ?>
                 </button>
             </div>
         </form>

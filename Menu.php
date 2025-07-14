@@ -29,13 +29,13 @@ if (empty($_SESSION['id'])) {
 <html lang="en">
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Project Muhammad Siddiq</title>
-    <link rel="shortcut icon" type="image/png" href="https://img.freepik.com/premium-vector/simple-laundry-logo_756483-88.jpg?semt=ais_hybrid&w=740" />
+    <title>🧺 Laundry Om Ruben</title>
+    <link rel="shortcut icon" type="image/png" href="" />
     <meta
       content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
       name="viewport"
     />
-    <?php include 'admin/inc/cdnAtas.php' ?>
+    <?php include 'admin/inc/css.php' ?>
   </head>
   <body>
     <div class="wrapper">
@@ -80,6 +80,8 @@ if (empty($_SESSION['id'])) {
               // Jika parameter 'page' tidak ada, tampilkan halaman dashboard sebagai default
               include 'admin/content/dashboard.php';
             }
+
+            
             ?>
       <!-- batas sampe sini -->
             </div>
@@ -94,7 +96,7 @@ if (empty($_SESSION['id'])) {
     <?php include 'admin/inc/customTemp.php' ?>
       <!-- End Custom template -->
     </div>
-    <?php include 'admin/inc/cdnBawah.php' ?>
+    <?php include 'admin/inc/js.php' ?>
     <?php include 'admin/inc/script.php' ?>
   </body>
 </html>

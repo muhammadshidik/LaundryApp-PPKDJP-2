@@ -4,21 +4,21 @@ $queryData = mysqli_query($connection, "SELECT * FROM customer ORDER BY updated_
 ?>
 <div class="card shadow">
     <div class="card-header">
-        <h3>Data Customer</h3>
+        <h5>Data Pelanggan</h5>
     </div>
     <div class="card-body">
         <?php include 'admin/controller/alert-data-crud.php' ?>
         <div align="right" class="button-action">
-            <a href="?page=add-customer" class="btn btn-primary"><i class='bx bx-plus'>Add Customer</i></a>
+            <a href="?page=add-customer" class="btn btn-primary btn-sm">Tambah Pelanggan</a>
         </div>
         <table class="table table-bordered table-striped table-hover table-responsive mt-3">
             <thead>
                 <tr>
                     <th>No</th>
-                    <th>Customer Name</th>
-                    <th>Phone</th>
-                    <th>Address</th>
-                    <th>Action</th>
+                    <th>Nama Customer</th>
+                    <th>No. Handphone</th>
+                    <th>Alamat</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -32,14 +32,12 @@ $queryData = mysqli_query($connection, "SELECT * FROM customer ORDER BY updated_
                         <td><?= isset($rowData['address']) ? $rowData['address'] : '-' ?></td>
                         <td>
                             <a href="?page=add-customer&edit=<?php echo $rowData['id'] ?>">
-                                <button class="btn btn-secondary btn-sm">
-                                    <i class="tf-icon bx bx-edit bx-22px">Edit</i>
+                                <button class="btn btn-secondary btn-sm">Edit
                                 </button>
                             </a>
                             <a onclick="return confirm ('Apakah anda yakin akan menghapus data ini?')"
                                 href="?page=add-customer&delete=<?php echo $rowData['id'] ?>">
-                                <button class="btn btn-danger btn-sm">
-                                    <i class="tf-icon bx bx-trash bx-22px">Delete</i>
+                                <button class="btn btn-danger btn-sm">Hapus
                                 </button>
                             </a>
                         </td>

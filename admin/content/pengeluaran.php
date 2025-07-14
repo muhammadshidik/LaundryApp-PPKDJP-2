@@ -43,25 +43,25 @@
                                 <tbody>
                                     <?php
                                     include 'admin/controller/koneksi.php';
-                                    $query = "SELECT * FROM pengeluaran ORDER BY tgl_pengeluaran DESC";
+                                    $query = "SELECT * FROM pengeluaran ORDER BY tanggal DESC";
                                     $result = mysqli_query($connection, $query);
                                     $i = 1;
                                     while ($row = mysqli_fetch_assoc($result)) :
                                     ?>
                                         <tr>
                                             <td><?= $i++; ?></td>
-                                            <td><?= $row['id_pengeluaran']; ?></td>
-                                            <td><?= date('d F Y', strtotime($row['tgl_pengeluaran'])); ?></td>
-                                            <td><?= $row['catatan']; ?></td>
+                                            <td><?= $row['id']; ?></td>
+                                            <td><?= date('d F Y', strtotime($row['tanggal'])); ?></td>
+                                            <td><?= $row['deskripsi']; ?></td>
                                             <td>Rp. <?= number_format((float)$row['pengeluaran']); ?></td>
                                             <td>
-                                                <a href="?page=add-pengeluaran&action=edit&id=<?= $row['id_pengeluaran']; ?>" class="btn btn-warning">
+                                                <a href="?page=add-pengeluaran&action=edit&id=<?= $row['id']; ?>" class="btn btn-warning">
                                                     <i class="fa fa-tags"></i>
                                                 </a>
-                                                <a href="?page=add-pengeluaran&action=delete&id=<?= $row['id_pengeluaran']; ?>" class="btn btn-danger" onclick="return confirm('Yakin hapus?');">
+                                                <a href="?page=add-pengeluaran&action=delete&id=<?= $row['id']; ?>" class="btn btn-danger" onclick="return confirm('Yakin hapus?');">
                                                     <i class="fa fa-trash"></i>
                                                 </a>
-                                                <a href="?page=add-pengeluaran&action=view&id=<?= $row['id_pengeluaran']; ?>" class="btn btn-primary">
+                                                <a href="?page=add-pengeluaran&action=view&id=<?= $row['id']; ?>" class="btn btn-primary">
                                                     <i class="fa fa-eye"></i>
                                                 </a>
                                             </td>

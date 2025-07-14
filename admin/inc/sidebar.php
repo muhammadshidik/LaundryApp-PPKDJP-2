@@ -24,10 +24,11 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
                 <i class="gg-more-vertical-alt"></i>
             </button>
         </div>
-        </div>
-    <div class="sidebar-wrapper scrollbar scrollbar-inner">
-        <div class="sidebar-content">
-            <ul class="nav nav-secondary">
+        </div> 
+        <div class="sidebar-wrapper scrollbar scrollbar-inner">
+            <div class="sidebar-content">
+                <ul class="nav nav-secondary">
+                <?php if ($dataNavbar['id_level'] == 1) : ?>
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#dashboardMenu">
                         <i class="fas fa-home"></i>
@@ -44,15 +45,13 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
                         </ul>
                     </div>
                 </li>
-
+               
                 <li class="nav-section">
                     <span class="sidebar-mini-icon">
                         <i class="fa fa-ellipsis-h"></i>
                     </span>
                     <h4 class="text-section">Master Data</h4>
                 </li>
-
-                <?php if ($dataNavbar['id_level'] == 1) : ?>
                     <li class="nav-item">
                         <a data-bs-toggle="collapse" href="#adminMenu">
                             <i class="fas fa-layer-group"></i>
@@ -68,13 +67,10 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
                                     <a href="?page=level"><span class="sub-item">Level</span></a>
                                 </li>
                                 <li <?= (isset($_GET['page']) && in_array($_GET['page'], ['customer', 'add-customer'])) ? 'class="active"' : '' ?>>
-                                    <a href="?page=customer"><span class="sub-item">Customer</span></a>
+                                    <a href="?page=customer"><span class="sub-item">Pelanggan</span></a>
                                 </li>
                                 <li <?= (isset($_GET['page']) && in_array($_GET['page'], ['service', 'add-service'])) ? 'class="active"' : '' ?>>
                                      <a href="?page=service"><span class="sub-item">Service</span></a>
-                                </li>
-                                <li <?= (isset($_GET['page']) && in_array($_GET['page'], ['pengeluaran', 'add-pengeluaran'])) ? 'class="active"' : '' ?>>
-                                    <a href="?page=pengeluaran"><span class="sub-item">Data Pengeluaran</span></a>
                                 </li>
                             </ul>
                         </div>
@@ -88,6 +84,9 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
                         </a>
                         <div class="collapse" id="operatorMenu">
                             <ul class="nav nav-collapse">
+                                 <li <?= (isset($_GET['page']) && in_array($_GET['page'], ['transaksi', 'add-transaksi'])) ? 'class="active"' : '' ?>>
+                                    <a href="?page=transaksi"><span class="sub-item">Transaksi</span></a>
+                                </li>
                                 <li <?= (isset($_GET['page']) && in_array($_GET['page'], ['order', 'add-order'])) ? 'class="active"' : '' ?>>
                                     <a href="?page=order"><span class="sub-item">Order</span></a>
                                 </li>

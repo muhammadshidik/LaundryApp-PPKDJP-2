@@ -106,7 +106,7 @@ $jmlpengeluaran = number_format($dataPengeluaran['total']);
             <li><strong>Nama:</strong> <?= $tampilusers['username']; ?></li>
             <li><strong>Jabatan:</strong> <?= $tampilusers['level_name']; ?></li>
           </ul>
-          <small class="text-muted">Login pada: <?= $_SESSION['tgllogin']; ?></small>
+          <small class="text-muted">Login pada: <?= $_SESSION['tanggal']; ?></small>
         </div>
       </div>
     </div>

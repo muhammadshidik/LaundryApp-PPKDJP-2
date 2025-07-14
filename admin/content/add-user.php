@@ -37,7 +37,7 @@ $queryLevel = mysqli_query($connection, "SELECT * FROM level");
 
 <div class="card shadow">
     <div class="card-header">
-        <h3><?= isset($_GET['edit']) ? 'Edit' : 'Add' ?> User</h3>
+        <h5><?= isset($_GET['edit']) ? 'Edit' : 'Add' ?> User</h5>
     </div>
     <div class="card-body">
         <form action="" method="post">
@@ -64,7 +64,7 @@ $queryLevel = mysqli_query($connection, "SELECT * FROM level");
                     </select>
                 </div>
                 <div class="col-sm-6 form-group mb-3 form-password-toggle">
-                    <label for="" class="form-label">Old Password</label>
+                    <label for="" class="form-label">Password Baru (opsional)</label>
                     <div class="input-group input-group-merge">
                         <input type="password" id="password" class="form-control" name="password"
                             placeholder="Enter password" aria-describedby="password" />
@@ -72,11 +72,11 @@ $queryLevel = mysqli_query($connection, "SELECT * FROM level");
                     </div>
                 </div>
             </div>
-            <div class="" align="right">
-                <a href="?page=user" class="btn btn-secondary">Back</a>
-                <button type="submit" class="btn btn-primary"
+            <div class="" align="left">
+                <a href="?page=user" class="btn btn-secondary btn-sm">Kembali</a>
+                <button type="submit" class="btn btn-primary btn-sm"
                     name="<?php echo isset($_GET['edit']) ? 'edit' : 'add' ?>">
-                    <?php echo isset($_GET['edit']) ? 'Edit' : 'Add' ?>
+                    <?php echo isset($_GET['edit']) ? 'Simpan' : 'Add' ?>
                 </button>
             </div>
         </form>

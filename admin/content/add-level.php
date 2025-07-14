@@ -33,21 +33,22 @@ if (isset($_GET['delete'])) {
 
 <div class="card shadow">
     <div class="card-header">
-        <h3><?= isset($_GET['edit']) ? 'Edit' : 'Add' ?> Level</h3>
-    </div>
+        <h5><?= isset($_GET['edit']) ? 'Edit' : 'Add' ?> Level</h5>
+</div>
     <div class="card-body">
         <form action="" method="post">
             <div class="row">
                 <div class="col-sm-6 mb-3">
-                    <label for="" class="form-label">Level Name</label>
+                    <label for="" class="form-label">Nama Level</label>
                     <input type="text" class="form-control" id="" name="level_name" placeholder="Enter level name"
                         value="<?= isset($_GET['edit']) ? $rowEdit['level_name'] : '' ?>" required>
                 </div>
             </div>
-            <div class="">
+            <div align="left" class="">
+                 <a href="?page=level" class="btn btn-secondary btn-sm">Kembali</a>
                 <button type="submit" class="btn btn-primary btn-sm"
                     name="<?php echo isset($_GET['edit']) ? 'edit' : 'add' ?>">
-                    <?php echo isset($_GET['edit']) ? 'Edit' : 'Add' ?>
+                    <?php echo isset($_GET['edit']) ? 'Simpan' : 'Simpan' ?>
                 </button>
             </div>
         </form>
