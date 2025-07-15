@@ -144,7 +144,7 @@ WHERE id_order = '$id'");
 <body>
     <div class="struct">
         <div class="struct-header">
-            <img src="https://awsimages.detik.net.id/customthumb/2012/04/16/10/Jokowi-Metal-D.jpg?w=600&q=90" alt="Laundry Faith Logo" width="50px">
+            <img src="" alt="" width="50px">
             <p><strong>Laundry App</strong></p>
             <p>Jl.Tb. Simatupang, RT.011, RW.002, Kel. Susukan, Kec. Ciracas, Jakarta Timur</p>
             <p>0818-0818-0818</p>

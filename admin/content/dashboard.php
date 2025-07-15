@@ -18,9 +18,7 @@ $rowUser = mysqli_fetch_assoc(mysqli_query($connection, "SELECT COUNT(*) AS tota
 $dataTransaksi = mysqli_fetch_assoc(mysqli_query($connection, "SELECT COUNT(*) AS total FROM trans_order"));
 $insert_trans_order = $dataTransaksi['total'];
 
-// Total pengeluaran
-$dataPengeluaran = mysqli_fetch_assoc(mysqli_query($connection, "SELECT SUM(pengeluaran) AS total FROM pengeluaran"));
-$jmlpengeluaran = number_format($dataPengeluaran['total']);
+
 ?>
 
 <div class="container py-4">
@@ -54,16 +52,16 @@ $jmlpengeluaran = number_format($dataPengeluaran['total']);
 
     <!-- User -->
     <?php if ($tampilusers['id_level'] == 1) : ?>
-    <div class="col-md-6 col-xl-3">
-      <div class="card text-white shadow border-0" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-        <div class="card-body text-center">
-          <i class="mdi mdi-account-key fs-1 mb-2"></i>
-          <h3 class="fw-bold"><?= $rowUser['total']; ?></h3>
-          <p class="mb-2">Total User</p>
-          <a href="?page=users" class="btn btn-light btn-sm fw-semibold">Lihat Detail</a>
+      <div class="col-md-6 col-xl-3">
+        <div class="card text-white shadow border-0" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+          <div class="card-body text-center">
+            <i class="mdi mdi-account-key fs-1 mb-2"></i>
+            <h3 class="fw-bold"><?= $rowUser['total']; ?></h3>
+            <p class="mb-2">Total User</p>
+            <a href="?page=users" class="btn btn-light btn-sm fw-semibold">Lihat Detail</a>
+          </div>
         </div>
       </div>
-    </div>
     <?php endif; ?>
 
     <!-- Transaksi -->
@@ -112,4 +110,3 @@ $jmlpengeluaran = number_format($dataPengeluaran['total']);
     </div>
   </div>
 </div>
-

@@ -2,25 +2,18 @@
 require_once 'admin/controller/koneksi.php';
 include 'admin/controller/operator-validation.php';
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-// Logika untuk generate order code
-$getOrderCodeQuery = mysqli_query($connection, "SELECT id FROM trans_order ORDER BY id DESC LIMIT 1");
-$getorderCodeID = mysqli_fetch_assoc($getOrderCodeQuery);
-$orderCodeID = (mysqli_num_rows($getOrderCodeQuery) > 0) ? $getorderCodeID['id'] + 1 : 1;
-$orderCode = "LNDRY-" . date('YmdHis') . $orderCodeID;
 
 // Logika saat form disubmit untuk MENAMBAH order
 if (isset($_POST['add_order'])) {
     // var_dump($_POST); die(); // (Untuk debug, hapus jika sudah ok)
 
     $id_customer = $_POST['id_customer'];
-    $order_code = $_POST['order_code'];
+    // ***** REVISI PHP: Menerima order_code dari JavaScript, TIDAK menggeneratenya di PHP lagi *****
+    $order_code = $_POST['order_code']; // Menggunakan order_code yang dikirim dari JavaScript
+
     $order_date = $_POST['order_date'];
     $order_end_date = $_POST['order_end_date'];
-    $order_status = $_POST['order_status']; // <-- Nilai ini sekarang pasti terkirim
+    $order_status = $_POST['order_status'];
     $total_price = $_POST['total_price'];
 
     // Insert ke tabel utama
@@ -37,16 +30,59 @@ if (isset($_POST['add_order'])) {
         }
     }
 
-    // Alihkan kembali ke halaman daftar order dengan notifikasi sukses
-    header("Location:?page=order&add=success");
-    die;
-} else if (isset($_GET['view'])) { // Logika untuk MELIHAT detail
-    $idView = $_GET['view'];
-    $queryView = mysqli_query($connection, "SELECT trans_order.*, customer.customer_name, customer.phone, customer.address FROM trans_order LEFT JOIN customer ON trans_order.id_customer = customer.id WHERE trans_order.id = '$idView'");
-    $rowView = mysqli_fetch_assoc($queryView);
+    // Mengambil kembali data transaksi yang baru saja disimpan untuk ditampilkan di struk
+    // Penting: Menggunakan order_code yang *baru saja disimpan* dari $_POST, bukan berdasarkan ID database terakhir
+    $query_new_order = mysqli_query($connection, "SELECT trans_order.*, customer.customer_name, customer.phone, customer.address
+                                                FROM trans_order
+                                                LEFT JOIN customer ON trans_order.id_customer = customer.id
+                                                WHERE trans_order.id = '$trans_order_id'"); // Menggunakan trans_order_id untuk ambil data yang benar-benar baru
+    $new_order_data = mysqli_fetch_assoc($query_new_order);
 
-    $orderViewID = $rowView['id'];
-    $queryOrderList = mysqli_query($connection, "SELECT trans_order_detail.*, type_of_service.* FROM trans_order_detail LEFT JOIN type_of_service ON trans_order_detail.id_service = type_of_service.id WHERE trans_order_detail.id_order = '$orderViewID'");
+    $query_new_order_details = mysqli_query($connection, "SELECT trans_order_detail.*, type_of_service.service_name, type_of_service.price
+                                                          FROM trans_order_detail
+                                                          LEFT JOIN type_of_service ON trans_order_detail.id_service = type_of_service.id
+                                                          WHERE trans_order_detail.id_order = '$trans_order_id'");
+    $new_order_items = [];
+    while ($row_detail = mysqli_fetch_assoc($query_new_order_details)) {
+        $new_order_items[] = $row_detail;
+    }
+
+    // Gabungkan data untuk dikirim kembali ke JavaScript
+    $new_transaction_for_js = [
+        'id' => $new_order_data['order_code'], // Menggunakan order_code yang DARI DATABASE (yang berasal dari JS)
+        'db_id' => $new_order_data['id'], // Tambahkan ID dari database
+        'customer' => [
+            'name' => $new_order_data['customer_name'],
+            'phone' => $new_order_data['phone'],
+            'address' => $new_order_data['address']
+        ],
+        'items' => array_map(function ($item) {
+            return [
+                'service' => $item['service_name'],
+                'weight' => (float)$item['qty'], // Pastikan ini float
+                'price' => (float)$item['price'], // Pastikan ini float
+                'subtotal' => (float)$item['subtotal'] // Pastikan ini float
+            ];
+        }, $new_order_items),
+        'total' => (float)$new_order_data['total_price'], // Pastikan ini float
+        'date' => $new_order_data['order_date'],
+        'status' => $new_order_data['order_status']
+    ];
+
+    // Simpan data transaksi baru di session atau kirim via JS
+    echo "<script>const NEW_TRANSACTION_DATA = " . json_encode($new_transaction_for_js) . ";</script>";
+} else if (isset($_POST['update_status'])) { // Logika untuk UPDATE status (dari AJAX)
+    $id_order = $_POST['id_order'];
+    $new_status = $_POST['new_status'];
+
+    $update_query = mysqli_query($connection, "UPDATE trans_order SET order_status = '$new_status' WHERE id = '$id_order'");
+
+    if ($update_query) {
+        echo json_encode(['success' => true, 'message' => 'Status berhasil diupdate.']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Gagal mengupdate status.']);
+    }
+    exit; // Penting: Hentikan eksekusi setelah mengirim JSON response
 } else if (isset($_GET['delete'])) { // Logika untuk MENGHAPUS
     $idDelete = $_GET['delete'];
     mysqli_query($connection, "DELETE FROM trans_order WHERE id='$idDelete'");
@@ -54,13 +90,9 @@ if (isset($_POST['add_order'])) {
     // Jika tidak, query di bawah ini diperlukan
     // mysqli_query($connection, "DELETE FROM trans_order_detail WHERE id_order='$idDelete'");
     // mysqli_query($connection, "DELETE FROM trans_laundry_pickup WHERE id_order = '$idDelete'");
-    header("Location:?page=order&delete=success");
+    header("Location:?page=transaksi&delete=success");
     die;
 }
-
-// Query untuk mengisi dropdown di form
-// (queryService ini tidak lagi perlu diulang jika data sudah diambil ke $servicesData)
-// $queryService = mysqli_query($connection, "SELECT * FROM type_of_service");
 
 // Ambil semua data customer dan simpan dalam array untuk JS
 $queryCustomerForJs = mysqli_query($connection, "SELECT id, customer_name, phone, address FROM customer");
@@ -68,21 +100,56 @@ $customersData = [];
 while ($row = mysqli_fetch_assoc($queryCustomerForJs)) {
     $customersData[] = $row;
 }
-// Reset pointer queryCustomer jika Anda masih akan menggunakannya untuk HTML SELECT di bawah
-// Jika tidak, Anda bisa langsung pakai $customersData di loop HTML
 $queryCustomer = mysqli_query($connection, "SELECT * FROM customer"); // Ambil ulang atau pastikan pointer di reset
 
-// --- PENAMBAHAN PHP: Ambil semua data service dan simpan dalam array untuk JS ---
+// Ambil semua data service dan simpan dalam array untuk JS
 $queryServiceData = mysqli_query($connection, "SELECT id, service_name, price FROM type_of_service");
 $servicesData = [];
 while ($row = mysqli_fetch_assoc($queryServiceData)) {
     $servicesData[] = $row;
 }
-// --- AKHIR PENAMBAHAN PHP ---
+
+// Ambil semua data transaksi untuk diinisialisasi di JS
+$queryAllTransactions = mysqli_query($connection, "SELECT trans_order.*, customer.customer_name, customer.phone, customer.address
+                                                FROM trans_order
+                                                LEFT JOIN customer ON trans_order.id_customer = customer.id
+                                                ORDER BY trans_order.order_date DESC");
+$allTransactionsData = [];
+while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
+    $order_id = $row['id'];
+    $query_order_details = mysqli_query($connection, "SELECT trans_order_detail.*, type_of_service.service_name, type_of_service.price
+                                                      FROM trans_order_detail
+                                                      LEFT JOIN type_of_service ON trans_order_detail.id_service = type_of_service.id
+                                                      WHERE trans_order_detail.id_order = '$order_id'");
+    $order_items = [];
+    while ($row_detail = mysqli_fetch_assoc($query_order_details)) {
+        $order_items[] = [
+            'service' => $row_detail['service_name'],
+            'weight' => (float)$row_detail['qty'],
+            'price' => (float)$row_detail['price'],
+            'subtotal' => (float)$row_detail['subtotal']
+        ];
+    }
+
+    $allTransactionsData[] = [
+        'id' => $row['order_code'],
+        'db_id' => $row['id'], // Tambahkan ID dari database
+        'customer' => [
+            'name' => $row['customer_name'],
+            'phone' => $row['phone'],
+            'address' => $row['address']
+        ],
+        'items' => $order_items,
+        'total' => (float)$row['total_price'],
+        'date' => $row['order_date'],
+        'status' => $row['order_status']
+    ];
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -476,10 +543,11 @@ while ($row = mysqli_fetch_assoc($queryServiceData)) {
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
-            <h1>🧺 Laundry Om Ruben</h1>
+            <h1>Laundry App Siddiq</h1>
             <p class="subtitle">Point of Sales System - Kelola Transaksi Laundry dengan Mudah</p>
         </div>
 
@@ -506,12 +574,13 @@ while ($row = mysqli_fetch_assoc($queryServiceData)) {
             <div class="card">
                 <h2>🛒 Transaksi Baru</h2>
 
-                <form id="transactionForm">
+                <form id="transactionForm" method="POST" action="">
                     <div class="form-group">
                         <label for="customerName">Nama Pelanggan</label>
                         <select name="id_customer" id="customerName" class="form-control" required>
                             <option value="">-- Pilih Pelanggan --</option>
-                            <?php mysqli_data_seek($queryCustomer, 0); // Reset pointer for customer dropdown ?>
+                            <?php mysqli_data_seek($queryCustomer, 0); // Reset pointer for customer dropdown 
+                            ?>
                             <?php while ($rowCustomer = mysqli_fetch_assoc($queryCustomer)) : ?>
                                 <option value="<?= $rowCustomer['id'] ?>"><?= $rowCustomer['customer_name'] ?></option>
                             <?php endwhile ?>
@@ -521,16 +590,18 @@ while ($row = mysqli_fetch_assoc($queryServiceData)) {
                     <div class="form-row">
                         <div class="form-group">
                             <label for="customerPhone">No. Telepon</label>
-                            <input type="tel" id="customerPhone" required readonly> </div>
+                            <input type="tel" id="customerPhone" required readonly>
+                        </div>
                         <div class="form-group">
                             <label for="customerAddress">Alamat</label>
-                            <input type="text" id="customerAddress" readonly> </div>
+                            <input type="text" id="customerAddress" readonly>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label>Pilih Layanan</label>
                         <div class="services-grid" id="servicesGridContainer">
-                            </div>
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -542,7 +613,7 @@ while ($row = mysqli_fetch_assoc($queryServiceData)) {
                             <label for="serviceType">Jenis Layanan</label>
                             <select id="serviceType" required>
                                 <option value="">Pilih Layanan</option>
-                                </select>
+                            </select>
                         </div>
                     </div>
 
@@ -585,22 +656,6 @@ while ($row = mysqli_fetch_assoc($queryServiceData)) {
             <div class="card">
                 <h2>📊 Riwayat Transaksi</h2>
                 <div class="transaction-list" id="transactionHistory">
-                    <div class="transaction-item">
-                        <h4>TRX-001 - John Doe</h4>
-                        <p>📞 0812-3456-7890</p>
-                        <p>🛍️ Cuci Setrika - 2.5kg</p>
-                        <p>💰 Rp 17.500</p>
-                        <p>📅 13 Juli 2025, 14:30</p>
-                        <span class="status-badge status-process">Proses</span>
-                    </div>
-                    <div class="transaction-item">
-                        <h4>TRX-002 - Jane Smith</h4>
-                        <p>📞 0813-7654-3210</p>
-                        <p>🛍️ Cuci Kering - 3kg</p>
-                        <p>💰 Rp 15.000</p>
-                        <p>📅 13 Juli 2025, 13:15</p>
-                        <span class="status-badge status-ready">Siap</span>
-                    </div>
                 </div>
 
                 <button class="btn btn-warning" onclick="showAllTransactions()" style="width: 100%; margin-top: 15px;">
@@ -624,7 +679,7 @@ while ($row = mysqli_fetch_assoc($queryServiceData)) {
 
     <div id="transactionModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
+            <span class="close" onclick="closeModal(true)">&times;</span>
             <div id="modalContent"></div>
         </div>
     </div>
@@ -632,31 +687,31 @@ while ($row = mysqli_fetch_assoc($queryServiceData)) {
     <script>
         // Data pelanggan yang diambil dari PHP
         const CUSTOMERS_DATA = <?= json_encode($customersData) ?>;
-        
-        // --- PENAMBAHAN JAVASCRIPT: Deklarasi data layanan dari PHP ---
+
+        // Data layanan dari PHP
         const SERVICES_DATA = <?= json_encode($servicesData) ?>;
-        // --- AKHIR PENAMBAHAN JAVASCRIPT ---
+
+        // Inisialisasi transaksi dari PHP (semua data transaksi dari database)
+        let transactions = <?= json_encode($allTransactionsData) ?>;
 
         let cart = [];
-        let transactions = JSON.parse(localStorage.getItem('laundryTransactions')) || [];
-        let transactionCounter = transactions.length + 1;
+        let transactionCounter = transactions.length + 1; // Untuk generate order_code di frontend
 
-        // Fungsi-fungsi yang dipanggil langsung oleh elemen HTML (onclick)
-        // Ditempatkan di bagian awal agar sudah tersedia saat HTML dimuat
-        function addService(serviceName, price) { // Parameter `price` bisa dihapus jika tidak lagi digunakan secara langsung
+        // Variabel global untuk menyimpan data transaksi yang baru diproses
+        let lastProcessedTransaction = null;
+
+        function addService(serviceName, price) {
             const serviceTypeSelect = document.getElementById('serviceType');
             const serviceWeightInput = document.getElementById('serviceWeight');
-            
-            // Mencari layanan berdasarkan nama dari data yang sudah dimuat
+
             const service = SERVICES_DATA.find(s => s.service_name === serviceName);
             if (service) {
-                serviceTypeSelect.value = service.service_name; // Mengisi dropdown dengan nama layanan
+                serviceTypeSelect.value = service.service_name;
             }
             serviceWeightInput.focus();
         }
 
         function parseDecimal(value) {
-            // Menangani koma dan titik sebagai pemisah desimal
             return parseFloat(value.toString().replace(',', '.')) || 0;
         }
 
@@ -671,30 +726,27 @@ while ($row = mysqli_fetch_assoc($queryServiceData)) {
                 return;
             }
 
-            // --- REVISI JAVASCRIPT: Ambil harga dari SERVICES_DATA ---
             const selectedService = SERVICES_DATA.find(s => s.service_name === serviceType);
             if (!selectedService) {
-                alert('Layanan tidak ditemukan!'); // Seharusnya tidak terjadi jika dropdown diisi dinamis
+                alert('Layanan tidak ditemukan!');
                 return;
             }
-            const price = selectedService.price; // Ambil harga dari objek layanan
+            const price = selectedService.price;
             const subtotal = price * weight;
 
             const item = {
-                id: Date.now(),
+                id: Date.now(), // ID unik untuk item di keranjang (hanya di frontend)
                 service_id: selectedService.id, // Menyimpan ID layanan dari database
-                service: selectedService.service_name, // Menggunakan nama layanan dari data
+                service: selectedService.service_name,
                 weight: weight,
                 price: price,
                 subtotal: subtotal,
                 notes: notes
             };
-            // --- AKHIR REVISI JAVASCRIPT ---
 
             cart.push(item);
             updateCartDisplay();
 
-            // Bersihkan form setelah ditambahkan ke keranjang
             document.getElementById('serviceType').value = '';
             document.getElementById('serviceWeight').value = '';
             document.getElementById('notes').value = '';
@@ -719,7 +771,6 @@ while ($row = mysqli_fetch_assoc($queryServiceData)) {
                 const unit = item.service.includes('Sepatu') ? 'pasang' :
                     item.service.includes('Karpet') ? 'm²' : 'kg';
 
-                // Format berat untuk ditampilkan dengan desimal (koma)
                 const formattedWeight = item.weight % 1 === 0 ?
                     item.weight.toString() :
                     item.weight.toFixed(1).replace('.', ',');
@@ -753,19 +804,30 @@ while ($row = mysqli_fetch_assoc($queryServiceData)) {
             cart = [];
             updateCartDisplay();
             document.getElementById('transactionForm').reset();
-            // --- PENAMBAHAN JAVASCRIPT: Mengosongkan input pelanggan setelah clear cart ---
             document.getElementById('customerName').value = '';
             document.getElementById('customerPhone').value = '';
             document.getElementById('customerAddress').value = '';
-            // --- AKHIR PENAMBAHAN JAVASCRIPT ---
         }
 
-        function processTransaction() {
-            // Ambil ID pelanggan dari dropdown
-            const customerId = document.getElementById('customerName').value;
-            // Dapatkan objek pelanggan dari CUSTOMERS_DATA
-            const selectedCustomer = CUSTOMERS_DATA.find(c => c.id == customerId);
+        function generateOrderCode() {
+            // Generate order code based on current date/time and a random string
+            const date = new Date();
+            const year = date.getFullYear().toString().slice(2); // YY
+            const month = (date.getMonth() + 1).toString().padStart(2, '0'); // MM
+            const day = date.getDate().toString().padStart(2, '0'); // DD
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const seconds = date.getSeconds().toString().padStart(2, '0');
 
+            const randomString = Math.random().toString(36).substring(2, 6).toUpperCase(); // 4 random chars
+
+            return `TRX-${year}${month}${day}-${hours}${minutes}${seconds}-${randomString}`;
+        }
+
+
+        function processTransaction() {
+            const customerId = document.getElementById('customerName').value;
+            const selectedCustomer = CUSTOMERS_DATA.find(c => c.id == customerId);
 
             if (!customerId || !selectedCustomer || cart.length === 0) {
                 alert('Mohon lengkapi data pelanggan dan pastikan ada item di keranjang!');
@@ -774,139 +836,196 @@ while ($row = mysqli_fetch_assoc($queryServiceData)) {
 
             const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
-            const transaction = {
-                id: `LND-${transactionCounter.toString().padStart(3, '0')}`,
-                customer: {
-                    id: selectedCustomer.id, // Simpan ID pelanggan
-                    name: selectedCustomer.customer_name,
-                    phone: selectedCustomer.phone,
-                    address: selectedCustomer.address
-                },
-                items: [...cart],
-                total: total,
-                date: new Date().toISOString(),
-                status: 'pending'
-            };
+            // Generate order ID for front-end (TRX-YYYYMMDD-HHMMSS-XXXX)
+            const transactionId = generateOrderCode();
 
-            transactions.push(transaction);
-            localStorage.setItem('laundryTransactions', JSON.stringify(transactions));
+            const form = document.getElementById('transactionForm');
 
-            transactionCounter++;
+            // Hapus input hidden lama yang mungkin ada dari submit sebelumnya
+            Array.from(form.elements).forEach(element => {
+                // Jangan hapus input asli 'id_customer' dari select
+                if (element.type === 'hidden' && element.name !== 'id_customer') {
+                    form.removeChild(element);
+                }
+            });
 
-            // Tampilkan struk
-            showReceipt(transaction);
+            // Input untuk add_order, agar PHP mengenali ini adalah submit transaksi baru
+            const addOrderInput = document.createElement('input');
+            addOrderInput.type = 'hidden';
+            addOrderInput.name = 'add_order';
+            addOrderInput.value = '1';
+            form.appendChild(addOrderInput);
 
-            // Bersihkan form dan keranjang
-            clearCart();
-            updateTransactionHistory();
-            updateStats();
+            // Input untuk order_code yang DIGENERATED OLEH JAVASCRIPT, dikirim ke PHP
+            const orderCodeInput = document.createElement('input');
+            orderCodeInput.type = 'hidden';
+            orderCodeInput.name = 'order_code';
+            orderCodeInput.value = transactionId; // Menggunakan order ID dari JS
+            form.appendChild(orderCodeInput);
+
+            // order_date
+            const orderDateInput = document.createElement('input');
+            orderDateInput.type = 'hidden';
+            orderDateInput.name = 'order_date';
+            orderDateInput.value = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            form.appendChild(orderDateInput);
+
+            // order_end_date (2 hari setelah order_date)
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + 2);
+            const orderEndDateInput = document.createElement('input');
+            orderEndDateInput.type = 'hidden';
+            orderEndDateInput.name = 'order_end_date';
+            orderEndDateInput.value = endDate.toISOString().slice(0, 19).replace('T', ' ');
+            form.appendChild(orderEndDateInput);
+
+            // order_status
+            const orderStatusInput = document.createElement('input');
+            orderStatusInput.type = 'hidden';
+            orderStatusInput.name = 'order_status';
+            orderStatusInput.value = 'pending';
+            form.appendChild(orderStatusInput);
+
+            // total_price
+            const totalPriceInput = document.createElement('input');
+            totalPriceInput.type = 'hidden';
+            totalPriceInput.name = 'total_price';
+            totalPriceInput.value = total;
+            form.appendChild(totalPriceInput);
+
+            // Detail layanan (items di keranjang)
+            cart.forEach((item, index) => {
+                const serviceIdInput = document.createElement('input');
+                serviceIdInput.type = 'hidden';
+                serviceIdInput.name = `id_service[${index}]`;
+                serviceIdInput.value = item.service_id;
+                form.appendChild(serviceIdInput);
+
+                const qtyInput = document.createElement('input');
+                qtyInput.type = 'hidden';
+                qtyInput.name = `qty[${index}]`;
+                qtyInput.value = item.weight;
+                form.appendChild(qtyInput);
+
+                const subtotalInput = document.createElement('input');
+                subtotalInput.type = 'hidden';
+                subtotalInput.name = `subtotal[${index}]`;
+                subtotalInput.value = item.subtotal;
+                form.appendChild(subtotalInput);
+            });
+
+            // Submit form ke PHP
+            document.body.appendChild(form); // Pastikan form ada di body sebelum submit
+            form.submit();
         }
 
-        // ... (Your existing JavaScript code before showReceipt) ...
-function showReceipt(transaction) {
-    const receiptHtml = `
-        <div class="receipt" id="printableReceipt">
-            <div class="receipt-header">
-                <h2>🧺 LAUNDRY RECEIPT</h2>
-                <p>ID: ${transaction.id}</p>
-                <p>Tanggal: ${new Date(transaction.date).toLocaleString('id-ID')}</p>
-            </div>
-
-            <div style="margin-bottom: 20px;">
-                <strong>Pelanggan:</strong><br>
-                ${transaction.customer.name}<br>
-                ${transaction.customer.phone}<br>
-                ${transaction.customer.address}
-            </div>
-
-            <div style="margin-bottom: 20px;">
-                <strong>Detail Pesanan:</strong><br>
-                ${transaction.items.map(item => `
-                    <div class="receipt-item">
-                        <span>${item.service} (${item.weight} ${item.service.includes('Sepatu') ? 'pasang' : item.service.includes('Karpet') ? 'm²' : 'kg'})</span>
-                        <span>Rp ${item.subtotal.toLocaleString()}</span>
+        function showReceipt(transaction) {
+            const receiptHtml = `
+                <div class="receipt" id="printableReceipt">
+                    <div class="receipt-header">
+                        <h2>🧺 LAUNDRY RECEIPT</h2>
+                        <p>ID: ${transaction.id}</p>
+                        <p>Tanggal: ${new Date(transaction.date).toLocaleString('id-ID')}</p>
                     </div>
-                `).join('')}
-            </div>
 
-            <div class="receipt-total">
-                <div class="receipt-item">
-                    <span>TOTAL:</span>
-                    <span>Rp ${transaction.total.toLocaleString()}</span>
+                    <div style="margin-bottom: 20px;">
+                        <strong>Pelanggan:</strong><br>
+                        ${transaction.customer.name}<br>
+                        ${transaction.customer.phone}<br>
+                        ${transaction.customer.address}
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <strong>Detail Pesanan:</strong><br>
+                        ${transaction.items.map(item => {
+                            const unit = item.service.includes('Sepatu') ? 'pasang' :
+                                         item.service.includes('Karpet') ? 'm²' : 'kg';
+                            const formattedWeight = item.weight % 1 === 0 ?
+                                                    item.weight.toString() :
+                                                    item.weight.toFixed(1).replace('.', ',');
+                            return `
+                            <div class="receipt-item">
+                                <span>${item.service} (${formattedWeight} ${unit})</span>
+                                <span>Rp ${item.subtotal.toLocaleString()}</span>
+                            </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div class="receipt-total">
+                        <div class="receipt-item">
+                            <span>TOTAL:</span>
+                            <span>Rp ${transaction.total.toLocaleString()}</span>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 20px;">
+                        <p>Terima kasih atas kepercayaan Anda!</p>
+                        <p>Barang akan siap dalam 1-2 hari kerja</p>
+                    </div>
                 </div>
-            </div>
 
-            <div style="text-align: center; margin-top: 20px;">
-                <p>Terima kasih atas kepercayaan Anda!</p>
-                <p>Barang akan siap dalam 1-2 hari kerja</p>
-            </div>
-        </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="printReceipt()">🖨️ Cetak Struk</button>
+                    <button class="btn btn-success" onclick="closeModal(true)">✅ Selesai</button>
+                </div>
+            `;
 
-        <div style="text-align: center; margin-top: 20px;">
-            <button class="btn btn-primary" onclick="printReceipt()">🖨️ Cetak Struk</button>
-            <button class="btn btn-success" onclick="closeModal()">✅ Selesai</button>
-        </div>
-    `;
-
-    document.getElementById('modalContent').innerHTML = receiptHtml;
-    document.getElementById('transactionModal').style.display = 'block';
-}
-
-// --- REVISI FUNGSI printReceipt ---
-function printReceipt() {
-    const originalBodyHtml = document.body.innerHTML; // Simpan isi body asli
-    const receiptContent = document.getElementById('printableReceipt').outerHTML; // Ambil HTML receipt
-
-    // Ganti isi body dengan hanya konten receipt
-    document.body.innerHTML = receiptContent;
-
-    // Tambahkan sedikit CSS untuk print jika diperlukan (misalnya menghilangkan margin/padding default browser)
-    const printStyles = `
-        @media print {
-            body {
-                margin: 0;
-                padding: 0;
-            }
-            .receipt {
-                width: 100%;
-                margin: 0;
-                box-shadow: none; /* Remove shadow for print */
-                border: none; /* Remove border for print if not desired */
-                padding: 10mm; /* Add some padding for printout */
-            }
+            document.getElementById('modalContent').innerHTML = receiptHtml;
+            document.getElementById('transactionModal').style.display = 'block';
         }
-    `;
-    const styleElement = document.createElement('style');
-    styleElement.innerHTML = printStyles;
-    document.head.appendChild(styleElement);
 
+        function printReceipt() {
+            const originalBodyHtml = document.body.innerHTML;
+            const receiptContent = document.getElementById('printableReceipt').outerHTML;
 
-    window.print(); // Cetak hanya isi yang ada di body
-
-    // Setelah mencetak, kembalikan isi body ke kondisi semula
-    document.body.innerHTML = originalBodyHtml;
-
-    // Hapus style tambahan untuk print
-    document.head.removeChild(styleElement);
-
-    // Pastikan modal tertutup atau tampilkan kembali jika perlu
-    // closeModal(); // Anda mungkin ingin modal tetap terbuka setelah cetak, atau menutupnya otomatis.
-                   // Jika ingin menutup, uncomment baris ini.
-}
-// --- AKHIR REVISI FUNGSI printReceipt ---
-
-// ... (Your existing JavaScript code after printReceipt) ...
+            const printWindow = window.open('', '_blank');
+            printWindow.document.open();
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Cetak Struk</title>
+                    <style>
+                        body { font-family: 'Courier New', monospace; margin: 0; padding: 0; }
+                        .receipt { width: 80mm; margin: 10mm auto; padding: 5mm; border: 1px solid #ccc; }
+                        .receipt-header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 10px; }
+                        .receipt-item { display: flex; justify-content: space-between; margin-bottom: 2px; }
+                        .receipt-total { border-top: 2px solid #333; padding-top: 5px; margin-top: 5px; font-weight: bold; }
+                        @media print {
+                            body { margin: 0; padding: 0; }
+                            .receipt { width: auto; margin: 0; box-shadow: none; border: none; padding: 10mm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${receiptContent}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+        }
 
         function updateTransactionHistory() {
             const historyContainer = document.getElementById('transactionHistory');
-            // Menampilkan 5 transaksi terbaru
-            const recentTransactions = transactions.slice(-5).reverse();
+            // Data transaksi diambil langsung dari variabel 'transactions' yang sudah diinisialisasi dari PHP
+            const currentTransactions = transactions;
+
+            const sortedTransactions = [...currentTransactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const recentTransactions = sortedTransactions.slice(0, 5); // Hanya menampilkan 5 transaksi terbaru
 
             const html = recentTransactions.map(transaction => `
                 <div class="transaction-item">
                     <h4>${transaction.id} - ${transaction.customer.name}</h4>
                     <p>📞 ${transaction.customer.phone}</p>
-                    <p>🛍️ ${transaction.items.map(item => `${item.service} - ${item.weight}${item.service.includes('Sepatu') ? 'pasang' : item.service.includes('Karpet') ? 'm²' : 'kg'}`).join(', ')}</p>
+                    <p>🛍️ ${transaction.items.map(item => {
+                        const unit = item.service.includes('Sepatu') ? 'pasang' : item.service.includes('Karpet') ? 'm²' : 'kg';
+                        const formattedWeight = item.weight % 1 === 0 ? item.weight.toString() : item.weight.toFixed(1).replace('.', ',');
+                        return `${item.service} - ${formattedWeight}${unit}`;
+                    }).join(', ')}</p>
                     <p>💰 Rp ${transaction.total.toLocaleString()}</p>
                     <p>📅 ${new Date(transaction.date).toLocaleString('id-ID')}</p>
                     <span class="status-badge status-${transaction.status}">${getStatusText(transaction.status)}</span>
@@ -918,10 +1037,8 @@ function printReceipt() {
 
         function getStatusText(status) {
             const statusMap = {
-                'pending': 'Menunggu',
-                'process': 'Proses',
-                'ready': 'Siap',
-                'delivered': 'Selesai'
+                '0': 'Belum Bayar',
+                '1': 'Lunas',
             };
             return statusMap[status] || status;
         }
@@ -929,8 +1046,8 @@ function printReceipt() {
         function updateStats() {
             const totalTransactions = transactions.length;
             const totalRevenue = transactions.reduce((sum, t) => sum + t.total, 0);
-            const activeOrders = transactions.filter(t => t.status !== 'delivered').length;
-            const completedOrders = transactions.filter(t => t.status === 'delivered').length;
+            const activeOrders = transactions.filter(t => t.status !== '1').length;
+            const completedOrders = transactions.filter(t => t.status === '1').length;
 
             document.getElementById('totalTransactions').textContent = totalTransactions;
             document.getElementById('totalRevenue').textContent = `Rp ${totalRevenue.toLocaleString()}`;
@@ -946,13 +1063,14 @@ function printReceipt() {
                         <div class="transaction-item">
                             <h4>${transaction.id} - ${transaction.customer.name}</h4>
                             <p>📞 ${transaction.customer.phone}</p>
-                            <p>🛍️ ${transaction.items.map(item => `${item.service} - ${item.weight}${item.service.includes('Sepatu') ? 'pasang' : item.service.includes('Karpet') ? 'm²' : 'kg'}`).join(', ')}</p>
+                            <p>🛍️ ${transaction.items.map(item => {
+                                const unit = item.service.includes('Sepatu') ? 'pasang' : item.service.includes('Karpet') ? 'm²' : 'kg';
+                                const formattedWeight = item.weight % 1 === 0 ? item.weight.toString() : item.weight.toFixed(1).replace('.', ',');
+                                return `${item.service} - ${formattedWeight}${unit}`;
+                            }).join(', ')}</p>
                             <p>💰 Rp ${transaction.total.toLocaleString()}</p>
                             <p>📅 ${new Date(transaction.date).toLocaleString('id-ID')}</p>
-                            <span class="status-badge status-${transaction.status}">${getStatusText(transaction.status)}</span>
-                            <button class="btn btn-primary" onclick="updateTransactionStatus('${transaction.id}')" style="margin-top: 10px; padding: 5px 15px; font-size: 12px;">
-                                📝 Update Status
-                            </button>
+                            <span class="status-badge status-${transaction.status}">Status : ${getStatusText(transaction.status)} </span>
                         </div>
                     `).join('')}
                 </div>
@@ -961,6 +1079,22 @@ function printReceipt() {
             document.getElementById('modalContent').innerHTML = allTransactionsHtml;
             document.getElementById('transactionModal').style.display = 'block';
         }
+
+        // Fungsi deleteTransaction untuk menghapus dari database
+        function deleteTransaction(dbId) {
+            if (confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) {
+                const url = `?page=transaksi&delete=${dbId}`;
+                window.location.href = url; // Redirect untuk memproses penghapusan di PHP
+            }
+        }
+
+        function bayar(orderCode) {
+            // Logika pembayaran, bisa mengarahkan ke halaman pembayaran atau memicu modal pembayaran
+            alert(`Membuka halaman pembayaran untuk transaksi: ${orderCode}`);
+            // Anda bisa menambahkan logika lebih lanjut di sini, seperti:
+            // window.location.href = `?page=pembayaran&order_code=${orderCode}`;
+        }
+
 
         function showReports() {
             const today = new Date();
@@ -1032,7 +1166,6 @@ function printReceipt() {
         }
 
         function manageServices() {
-            // --- REVISI JAVASCRIPT: Tampilkan layanan dari SERVICES_DATA ---
             const servicesTableHtml = `
                 <table class="cart-table">
                     <thead>
@@ -1068,30 +1201,21 @@ function printReceipt() {
                     </button>
                 </div>
             `;
-            // --- AKHIR REVISI JAVASCRIPT ---
 
             document.getElementById('modalContent').innerHTML = servicesHtml;
             document.getElementById('transactionModal').style.display = 'block';
         }
 
-        function updateTransactionStatus(transactionId) {
-            const transaction = transactions.find(t => t.id === transactionId);
+        async function updateTransactionStatus(dbId) {
+            const transaction = transactions.find(t => t.db_id == dbId);
             if (!transaction) return;
 
             const statusOptions = [{
-                    value: 'pending',
-                    text: 'Menunggu'
+                    value: '0',
+                    text: 'Belum Bayar'
                 },
                 {
-                    value: 'process',
-                    text: 'Sedang Proses'
-                },
-                {
-                    value: 'ready',
-                    text: 'Siap Diambil'
-                },
-                {
-                    value: 'delivered',
+                    value: '1',
                     text: 'Selesai'
                 }
             ];
@@ -1113,7 +1237,7 @@ function printReceipt() {
                 </div>
 
                 <div style="text-align: center; margin-top: 20px;">
-                    <button class="btn btn-success" onclick="saveStatusUpdate('${transactionId}')">
+                    <button class="btn btn-success" onclick="saveStatusUpdate('${dbId}')">
                         ✅ Simpan Update
                     </button>
                     <button class="btn btn-danger" onclick="closeModal()" style="margin-left: 10px;">
@@ -1126,103 +1250,72 @@ function printReceipt() {
             document.getElementById('transactionModal').style.display = 'block';
         }
 
-        function saveStatusUpdate(transactionId) {
+        async function saveStatusUpdate(dbId) {
             const newStatus = document.getElementById('newStatus').value;
-            const transactionIndex = transactions.findIndex(t => t.id === transactionId);
 
-            if (transactionIndex !== -1) {
-                transactions[transactionIndex].status = newStatus;
-                localStorage.setItem('laundryTransactions', JSON.stringify(transactions));
-                updateTransactionHistory();
-                updateStats();
-                closeModal();
-                alert('Status berhasil diupdate!');
+            try {
+                const response = await fetch('', { // Kirim ke file PHP yang sama
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `update_status=1&id_order=${dbId}&new_status=${newStatus}`
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    // Perbarui array 'transactions' di frontend
+                    const transactionIndex = transactions.findIndex(t => t.db_id == dbId);
+                    if (transactionIndex !== -1) {
+                        transactions[transactionIndex].status = newStatus;
+                    }
+
+                    updateTransactionHistory();
+                    updateStats();
+                    closeModal();
+                    alert('Status berhasil diupdate!');
+                } else {
+                    alert('Gagal mengupdate status: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat mengupdate status.');
             }
         }
 
-        function closeModal() {
+        function closeModal(shouldReload = false) {
             document.getElementById('transactionModal').style.display = 'none';
+            if (shouldReload) {
+                // Opsional: Reload halaman untuk memastikan data terbaru dari DB
+                window.location.href = "?page=transaksi";
+            }
         }
 
         function formatNumber(input) {
-            // Ganti koma dengan titik untuk pemisah desimal
             let value = input.value.replace(',', '.');
-
-            // Pastikan hanya angka desimal yang valid
             if (!/^\d*\.?\d*$/.test(value)) {
                 value = value.slice(0, -1);
             }
-
-            // Perbarui nilai input
             input.value = value;
         }
 
-        // Fungsi untuk menambahkan data contoh (hanya jika belum ada transaksi)
-        function addSampleData() {
-            const sampleTransactions = [{
-                    id: 'TRX-001',
-                    customer: {
-                        name: 'John Doe',
-                        phone: '0812-3456-7890',
-                        address: 'Jl. Merdeka 123'
-                    },
-                    items: [{
-                        service: 'Cuci Setrika',
-                        weight: 2.5,
-                        price: 7000,
-                        subtotal: 17500
-                    }],
-                    total: 17500,
-                    date: new Date().toISOString(),
-                    status: 'process'
-                },
-                {
-                    id: 'TRX-002',
-                    customer: {
-                        name: 'Jane Smith',
-                        phone: '0813-7654-3210',
-                        address: 'Jl. Sudirman 456'
-                    },
-                    items: [{
-                        service: 'Cuci Kering',
-                        weight: 3,
-                        price: 5000,
-                        subtotal: 15000
-                    }],
-                    total: 15000,
-                    date: new Date(Date.now() - 3600000).toISOString(),
-                    status: 'ready'
-                }
-            ];
 
-            if (transactions.length === 0) {
-                transactions = sampleTransactions;
-                localStorage.setItem('laundryTransactions', JSON.stringify(transactions));
-                transactionCounter = transactions.length + 1;
-            }
-        }
-
-        // Inisialisasi aplikasi setelah seluruh DOM dimuat
         document.addEventListener('DOMContentLoaded', function() {
-            addSampleData(); // Pastikan data contoh dimuat terlebih dahulu
             updateTransactionHistory();
             updateStats();
 
-            // Tambahkan event listener untuk input berat agar menangani desimal dengan koma
             const weightInput = document.getElementById('serviceWeight');
             weightInput.addEventListener('input', function() {
                 formatNumber(this);
             });
 
-            // Tutup modal saat mengklik di luar area modal
             window.onclick = function(event) {
                 const modal = document.getElementById('transactionModal');
                 if (event.target === modal) {
-                    closeModal();
+                    closeModal(); // Tidak reload jika klik di luar modal (hanya tutup)
                 }
             };
 
-            // Fungsi untuk auto-fill pelanggan
             const customerNameSelect = document.getElementById('customerName');
             const customerPhoneInput = document.getElementById('customerPhone');
             const customerAddressInput = document.getElementById('customerAddress');
@@ -1240,20 +1333,18 @@ function printReceipt() {
                 }
             });
 
-            // --- PENAMBAHAN JAVASCRIPT: Logika untuk mengisi layanan dari database ---
             const servicesGridContainer = document.getElementById('servicesGridContainer');
             const serviceTypeSelect = document.getElementById('serviceType');
 
             function populateServices() {
                 let buttonsHtml = '';
-                let optionsHtml = '<option value="">Pilih Layanan</option>'; // Opsi default
+                let optionsHtml = '<option value="">Pilih Layanan</option>';
 
                 SERVICES_DATA.forEach(service => {
                     const unitText = service.service_name.includes('Sepatu') ? 'pasang' :
-                                     service.service_name.includes('Karpet') ? 'm²' : 'kg';
-                    const formattedPrice = service.price.toLocaleString('id-ID'); // Format harga ke lokal Indonesia
+                        service.service_name.includes('Karpet') ? 'm²' : 'kg';
+                    const formattedPrice = service.price.toLocaleString('id-ID');
 
-                    // Tombol Layanan (di services-grid)
                     buttonsHtml += `
                         <button type="button" class="service-card" onclick="addService('${service.service_name}', ${service.price})">
                             <h3>${service.service_name}</h3>
@@ -1261,20 +1352,38 @@ function printReceipt() {
                         </button>
                     `;
 
-                    // Opsi Dropdown Layanan (di select#serviceType)
                     optionsHtml += `
                         <option value="${service.service_name}">${service.service_name} (Rp ${formattedPrice}/${unitText})</option>
                     `;
                 });
 
-                servicesGridContainer.innerHTML = buttonsHtml; // Masukkan tombol ke container
-                serviceTypeSelect.innerHTML = optionsHtml;     // Masukkan opsi ke dropdown
+                servicesGridContainer.innerHTML = buttonsHtml;
+                serviceTypeSelect.innerHTML = optionsHtml;
             }
 
-            // Panggil fungsi untuk mengisi layanan saat DOM selesai dimuat
             populateServices();
-            // --- AKHIR PENAMBAHAN JAVASCRIPT ---
+
+            // Cek apakah ada data transaksi baru dari PHP setelah submit
+            if (typeof NEW_TRANSACTION_DATA !== 'undefined' && NEW_TRANSACTION_DATA) {
+                // Tambahkan atau perbarui transaksi di array `transactions` lokal
+                const existingTransactionIndex = transactions.findIndex(t => t.db_id === NEW_TRANSACTION_DATA.db_id);
+                if (existingTransactionIndex === -1) {
+                    transactions.push(NEW_TRANSACTION_DATA);
+                } else {
+                    transactions[existingTransactionIndex] = NEW_TRANSACTION_DATA;
+                }
+
+                // Urutkan ulang transaksi berdasarkan tanggal terbaru agar history selalu menampilkan yang terbaru
+                transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                // Tampilkan struk untuk transaksi yang baru disimpan (yang dari PHP)
+                showReceipt(NEW_TRANSACTION_DATA);
+                clearCart(); // Bersihkan keranjang setelah transaksi ditampilkan di struk
+                updateTransactionHistory(); // Perbarui riwayat
+                updateStats(); // Perbarui statistik
+            }
         });
     </script>
 </body>
+
 </html>

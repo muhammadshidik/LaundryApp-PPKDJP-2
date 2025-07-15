@@ -6,7 +6,7 @@ $order_date_start = isset($_GET['order_date_start']) ? $_GET['order_date_start']
 $order_date_end = isset($_GET['order_date_end']) ? $_GET['order_date_end'] : '';
 $order_status = isset($_GET['order_status']) ? $_GET['order_status'] : '';
 
-$sql = "SELECT trans_order.*, customer.customer_name, trans_laundry_pickup.pickup_date, trans_laundry_pickup.pickup_date 
+$sql = "SELECT trans_order.*, customer.customer_name, trans_laundry_pickup.pickup_date, trans_laundry_pickup.pickup_date_start
 FROM trans_order 
 LEFT JOIN customer ON trans_order.id_customer = customer.id 
 LEFT JOIN trans_laundry_pickup ON trans_order.id = trans_laundry_pickup.id_order
@@ -53,11 +53,10 @@ if (isset($_GET['clear'])) {
                     <select name="order_status" id="" class="form-control">
                         <option value=""> All </option>
                         <option value="0"
-                            <?= isset($_GET['order_status']) && ($_GET['order_status'] == 0) ? 'selected' : '' ?>>New
+                            <?= isset($_GET['order_status']) && ($_GET['order_status'] == 0) ? 'selected' : '' ?>>Belum Bayar
                         </option>
                         <option value="1"
-                            <?= isset($_GET['order_status']) && ($_GET['order_status'] == 1) ? 'selected' : '' ?>>Picked
-                            Up
+                            <?= isset($_GET['order_status']) && ($_GET['order_status'] == 1) ? 'selected' : '' ?>>Lunas
                         </option>
                     </select>
                 </div>

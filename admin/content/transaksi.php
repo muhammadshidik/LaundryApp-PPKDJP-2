@@ -1,12 +1,15 @@
 <?php
-require_once 'admin/controller/koneksi.php';
-include 'admin/controller/operator-validation.php';
+
+// Gunakan __DIR__ untuk path absolut
+include __DIR__ . '/../controller/koneksi.php';
+include __DIR__ . '/../controller/operator-validation.php';
+
 
 $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_name FROM trans_order LEFT JOIN customer ON trans_order.id_customer = customer.id ORDER BY trans_order.order_status DESC, trans_order.updated_at DESC")
 ?>
 <div class="card shadow">
     <div class="card-header">
-        <h3>Data Order</h3>
+        <h3> Data Transaksi</h3>
     </div>
     <div class="card-body">
         <?php include 'admin/controller/alert-data-crud.php' ?>
@@ -20,7 +23,6 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
                     <th>Nomor Order</th>
                     <th>Nama Pelanggan</th>
                     <th>Order Start Date</th>
-                    <th>Order End Date</th>
                     <th>Order Status</th>
                     <th>Action</th>
                 </tr>
@@ -34,7 +36,6 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
                         <td><?= isset($rowData['order_code']) ? $rowData['order_code'] : '-' ?></td>
                         <td><?= isset($rowData['customer_name']) ? $rowData['customer_name'] : '-' ?></td>
                         <td><?= isset($rowData['order_date']) ? $rowData['order_date'] : '-' ?></td>
-                        <td><?= isset($rowData['order_end_date']) ? $rowData['order_end_date'] : '-' ?></td>
                         <?php $statusOrder = getOrderStatus($rowData['order_status']) ?>
                         <td><?= $statusOrder ?></td>
                         <td>
@@ -42,13 +43,16 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
                                 <button class="btn btn-secondary btn-sm">
                                     <i class="tf-icon bx bx-show bx-22px">View</i>
                                 </button>
-                            </a>
-                            <a onclick="return confirm ('Apakah anda yakin akan menghapus data ini?')"
-                                href="?page=add-order&delete=<?php echo $rowData['id'] ?>">
-                                <button class="btn btn-danger btn-sm">
-                                    <i class="tf-icon bx bx-trash bx-22px">Delete</i>
-                                </button>
-                            </a>
+                                <a href="?page=pickup">
+                                    <button class="btn btn-secondary btn-sm">
+                                        <i class="tf-icon bx bx-show bx-22px">Bayar</i>
+                                    </button>
+                                    <a onclick="return confirm ('Apakah anda yakin akan menghapus data ini?')"
+                                        href="?page=add-order&delete=<?php echo $rowData['id'] ?>">
+                                        <button class="btn btn-danger btn-sm">
+                                            <i class="tf-icon bx bx-trash bx-22px">Delete</i>
+                                        </button>
+                                    </a>
                         </td>
                     </tr>
                 <?php endwhile; // End While 

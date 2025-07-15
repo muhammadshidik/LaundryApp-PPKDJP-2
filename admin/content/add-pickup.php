@@ -184,7 +184,7 @@ $queryCustomer = mysqli_query($connection,  "SELECT * FROM customer");
             <div class="mt-3 gap-3" align="right">
                 <a href="?page=pickup" class="btn btn-secondary">Back</a>
                 <?php if ($rowView['order_status'] == 0): ?>
-                    <button class="btn btn-primary" name="pickup" type="submit">Pickup</button>
+                    <button class="btn btn-primary" name="pickup" type="submit">Bayar</button>
                 <?php elseif ($rowView['order_status'] == 1): ?>
                     <a href="admin/content/misc/print.php?order=<?= $_GET['view'] ?>" target="_blank"
                         class="btn btn-primary">Print</a>
