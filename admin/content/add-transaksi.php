@@ -8,16 +8,21 @@ if (isset($_POST['add_order'])) {
     // var_dump($_POST); die(); // (Untuk debug, hapus jika sudah ok)
 
     $id_customer = $_POST['id_customer'];
-    // ***** REVISI PHP: Menerima order_code dari JavaScript, TIDAK menggeneratenya di PHP lagi *****
     $order_code = $_POST['order_code']; // Menggunakan order_code yang dikirim dari JavaScript
 
     $order_date = $_POST['order_date'];
     $order_end_date = $_POST['order_end_date'];
     $order_status = $_POST['order_status'];
     $total_price = $_POST['total_price'];
+    
+    // --- PENAMBAHAN PHP: Ambil deskripsi dari POST ---
+    $deskripsi = isset($_POST['deskripsi']) ? $_POST['deskripsi'] : null; // Ambil nilai deskripsi
+    // --- AKHIR PENAMBAHAN PHP ---
 
     // Insert ke tabel utama
-    $insert_trans_order = mysqli_query($connection, "INSERT INTO trans_order (id_customer, order_code, order_date, order_end_date, order_status, total_price) VALUES ('$id_customer', '$order_code', '$order_date', '$order_end_date', '$order_status', '$total_price')");
+    // --- REVISI PHP: Tambahkan 'deskripsi' ke query INSERT ---
+    $insert_trans_order = mysqli_query($connection, "INSERT INTO trans_order (id_customer, order_code, order_date, order_end_date, order_status, total_price, deskripsi) VALUES ('$id_customer', '$order_code', '$order_date', '$order_end_date', '$order_status', '$total_price', '$deskripsi')");
+    // --- AKHIR REVISI PHP ---
     $trans_order_id = mysqli_insert_id($connection);
 
     // Insert ke tabel detail
@@ -32,16 +37,15 @@ if (isset($_POST['add_order'])) {
 
     // Mengambil kembali data transaksi yang baru saja disimpan untuk ditampilkan di struk
     // Penting: Menggunakan order_code yang *baru saja disimpan* dari $_POST, bukan berdasarkan ID database terakhir
+    // --- REVISI PHP: Tambahkan deskripsi ke query SELECT untuk new_order_data ---
     $query_new_order = mysqli_query($connection, "SELECT trans_order.*, customer.customer_name, customer.phone, customer.address
                                                 FROM trans_order
                                                 LEFT JOIN customer ON trans_order.id_customer = customer.id
-                                                WHERE trans_order.id = '$trans_order_id'"); // Menggunakan trans_order_id untuk ambil data yang benar-benar baru
+                                                WHERE trans_order.id = '$trans_order_id'");
+    // --- AKHIR REVISI PHP ---
     $new_order_data = mysqli_fetch_assoc($query_new_order);
 
-    $query_new_order_details = mysqli_query($connection, "SELECT trans_order_detail.*, type_of_service.service_name, type_of_service.price
-                                                          FROM trans_order_detail
-                                                          LEFT JOIN type_of_service ON trans_order_detail.id_service = type_of_service.id
-                                                          WHERE trans_order_detail.id_order = '$trans_order_id'");
+    $query_new_order_details = mysqli_query($connection, "SELECT trans_order_detail.*, type_of_service.service_name, type_of_service.price FROM trans_order_detail LEFT JOIN type_of_service ON trans_order_detail.id_service = type_of_service.id WHERE trans_order_detail.id_order = '$trans_order_id'");
     $new_order_items = [];
     while ($row_detail = mysqli_fetch_assoc($query_new_order_details)) {
         $new_order_items[] = $row_detail;
@@ -49,7 +53,7 @@ if (isset($_POST['add_order'])) {
 
     // Gabungkan data untuk dikirim kembali ke JavaScript
     $new_transaction_for_js = [
-        'id' => $new_order_data['order_code'], // Menggunakan order_code yang DARI DATABASE (yang berasal dari JS)
+        'id' => $new_order_data['order_code'],
         'db_id' => $new_order_data['id'], // Tambahkan ID dari database
         'customer' => [
             'name' => $new_order_data['customer_name'],
@@ -59,14 +63,18 @@ if (isset($_POST['add_order'])) {
         'items' => array_map(function ($item) {
             return [
                 'service' => $item['service_name'],
-                'weight' => (float)$item['qty'], // Pastikan ini float
-                'price' => (float)$item['price'], // Pastikan ini float
-                'subtotal' => (float)$item['subtotal'] // Pastikan ini float
+                // 'trans_order' => $item['deskripsi'], // Baris ini salah karena deskripsi bukan bagian dari item detail
+                'weight' => (float)$item['qty'],
+                'price' => (float)$item['price'],
+                'subtotal' => (float)$item['subtotal']
             ];
         }, $new_order_items),
-        'total' => (float)$new_order_data['total_price'], // Pastikan ini float
+        'total' => (float)$new_order_data['total_price'],
         'date' => $new_order_data['order_date'],
-        'status' => $new_order_data['order_status']
+        'status' => $new_order_data['order_status'],
+        // --- PENAMBAHAN PHP: Tambahkan deskripsi ke object transaksi JS ---
+        'description' => $new_order_data['deskripsi'] ?? '-' // Ambil deskripsi dari $new_order_data
+        // --- AKHIR PENAMBAHAN PHP ---
     ];
 
     // Simpan data transaksi baru di session atau kirim via JS
@@ -86,10 +94,6 @@ if (isset($_POST['add_order'])) {
 } else if (isset($_GET['delete'])) { // Logika untuk MENGHAPUS
     $idDelete = $_GET['delete'];
     mysqli_query($connection, "DELETE FROM trans_order WHERE id='$idDelete'");
-    // Detail dan pickup akan terhapus otomatis jika Anda set ON DELETE CASCADE di database
-    // Jika tidak, query di bawah ini diperlukan
-    // mysqli_query($connection, "DELETE FROM trans_order_detail WHERE id_order='$idDelete'");
-    // mysqli_query($connection, "DELETE FROM trans_laundry_pickup WHERE id_order = '$idDelete'");
     header("Location:?page=transaksi&delete=success");
     die;
 }
@@ -100,7 +104,7 @@ $customersData = [];
 while ($row = mysqli_fetch_assoc($queryCustomerForJs)) {
     $customersData[] = $row;
 }
-$queryCustomer = mysqli_query($connection, "SELECT * FROM customer"); // Ambil ulang atau pastikan pointer di reset
+$queryCustomer = mysqli_query($connection, "SELECT * FROM customer");
 
 // Ambil semua data service dan simpan dalam array untuk JS
 $queryServiceData = mysqli_query($connection, "SELECT id, service_name, price FROM type_of_service");
@@ -110,10 +114,12 @@ while ($row = mysqli_fetch_assoc($queryServiceData)) {
 }
 
 // Ambil semua data transaksi untuk diinisialisasi di JS
+// --- REVISI PHP: Tambahkan deskripsi ke query SELECT untuk allTransactionsData ---
 $queryAllTransactions = mysqli_query($connection, "SELECT trans_order.*, customer.customer_name, customer.phone, customer.address
                                                 FROM trans_order
                                                 LEFT JOIN customer ON trans_order.id_customer = customer.id
                                                 ORDER BY trans_order.order_date DESC");
+// --- AKHIR REVISI PHP ---
 $allTransactionsData = [];
 while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
     $order_id = $row['id'];
@@ -142,7 +148,10 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
         'items' => $order_items,
         'total' => (float)$row['total_price'],
         'date' => $row['order_date'],
-        'status' => $row['order_status']
+        'status' => $row['order_status'],
+        // --- PENAMBAHAN PHP: Tambahkan deskripsi ke object transaksi JS ---
+        'description' => $row['deskripsi'] ?? '-' // Ambil deskripsi dari $row
+        // --- AKHIR PENAMBAHAN PHP ---
     ];
 }
 ?>
@@ -154,7 +163,7 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Informasi Laundry - POS</title>
-    <style>
+   <style>
         /* CSS Anda yang sudah ada di sini */
         * {
             margin: 0;
@@ -619,7 +628,7 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
 
                     <div class="form-group">
                         <label for="notes">Catatan</label>
-                        <textarea id="notes" rows="3" placeholder="Catatan khusus untuk pesanan..."></textarea>
+                        <textarea id="notes" name="deskripsi" rows="3" placeholder="Catatan khusus untuk pesanan..."></textarea>
                     </div>
 
                     <button type="button" class="btn btn-primary" onclick="addToCart()" style="width: 100%; margin-bottom: 10px;">
@@ -719,7 +728,7 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
             const serviceType = document.getElementById('serviceType').value;
             const weightValue = document.getElementById('serviceWeight').value;
             const weight = parseDecimal(weightValue);
-            const notes = document.getElementById('notes').value;
+            // const notes = document.getElementById('notes').value; // Ambil notes dari sini
 
             if (!serviceType || !weightValue || weight <= 0) {
                 alert('Mohon lengkapi semua field yang diperlukan!');
@@ -741,7 +750,7 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
                 weight: weight,
                 price: price,
                 subtotal: subtotal,
-                notes: notes
+                // notes: notes // Catatan per item tidak lagi disimpan di sini, tapi catatan umum di transaksi
             };
 
             cart.push(item);
@@ -749,7 +758,7 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
 
             document.getElementById('serviceType').value = '';
             document.getElementById('serviceWeight').value = '';
-            document.getElementById('notes').value = '';
+            // document.getElementById('notes').value = ''; // Catatan tidak perlu dibersihkan setelah add to cart
         }
 
         function updateCartDisplay() {
@@ -807,19 +816,18 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
             document.getElementById('customerName').value = '';
             document.getElementById('customerPhone').value = '';
             document.getElementById('customerAddress').value = '';
+            document.getElementById('notes').value = ''; // Bersihkan catatan juga saat clear cart
         }
 
         function generateOrderCode() {
-            // Generate order code based on current date/time and a random string
             const date = new Date();
-            const year = date.getFullYear().toString().slice(2); // YY
-            const month = (date.getMonth() + 1).toString().padStart(2, '0'); // MM
-            const day = date.getDate().toString().padStart(2, '0'); // DD
+            const year = date.getFullYear().toString().slice(2);
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
             const hours = date.getHours().toString().padStart(2, '0');
             const minutes = date.getMinutes().toString().padStart(2, '0');
             const seconds = date.getSeconds().toString().padStart(2, '0');
-
-            const randomString = Math.random().toString(36).substring(2, 6).toUpperCase(); // 4 random chars
+            const randomString = Math.random().toString(36).substring(2, 6).toUpperCase();
 
             return `TRX-${year}${month}${day}-${hours}${minutes}${seconds}-${randomString}`;
         }
@@ -828,6 +836,7 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
         function processTransaction() {
             const customerId = document.getElementById('customerName').value;
             const selectedCustomer = CUSTOMERS_DATA.find(c => c.id == customerId);
+            const notes = document.getElementById('notes').value; // Ambil catatan/deskripsi utama transaksi
 
             if (!customerId || !selectedCustomer || cart.length === 0) {
                 alert('Mohon lengkapi data pelanggan dan pastikan ada item di keranjang!');
@@ -843,8 +852,8 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
 
             // Hapus input hidden lama yang mungkin ada dari submit sebelumnya
             Array.from(form.elements).forEach(element => {
-                // Jangan hapus input asli 'id_customer' dari select
-                if (element.type === 'hidden' && element.name !== 'id_customer') {
+                // Jangan hapus input asli 'id_customer' dari select atau 'notes' dari textarea
+                if (element.type === 'hidden' && !['id_customer', 'deskripsi'].includes(element.name)) {
                     form.removeChild(element);
                 }
             });
@@ -860,7 +869,7 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
             const orderCodeInput = document.createElement('input');
             orderCodeInput.type = 'hidden';
             orderCodeInput.name = 'order_code';
-            orderCodeInput.value = transactionId; // Menggunakan order ID dari JS
+            orderCodeInput.value = transactionId;
             form.appendChild(orderCodeInput);
 
             // order_date
@@ -883,7 +892,7 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
             const orderStatusInput = document.createElement('input');
             orderStatusInput.type = 'hidden';
             orderStatusInput.name = 'order_status';
-            orderStatusInput.value = 'pending';
+            orderStatusInput.value = '0'; // Default status 'Belum Bayar' (0)
             form.appendChild(orderStatusInput);
 
             // total_price
@@ -892,6 +901,17 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
             totalPriceInput.name = 'total_price';
             totalPriceInput.value = total;
             form.appendChild(totalPriceInput);
+
+            // --- PENAMBAHAN JAVASCRIPT: Input untuk deskripsi/catatan transaksi ---
+            // Karena textarea sudah memiliki name="deskripsi", kita tidak perlu membuat hidden input baru jika nilai sudah ada di textarea
+            // Pastikan textarea itu sendiri akan dikirim oleh form.submit()
+            // Namun, jika Anda ingin memastikan nilai 'notes' dari JS yang dikirim, bisa membuat hidden input ini:
+            const descriptionInput = document.createElement('input');
+            descriptionInput.type = 'hidden';
+            descriptionInput.name = 'deskripsi'; // Sesuai dengan nama kolom di DB
+            descriptionInput.value = notes; // Mengambil nilai dari textarea 'notes'
+            form.appendChild(descriptionInput);
+            // --- AKHIR PENAMBAHAN JAVASCRIPT ---
 
             // Detail layanan (items di keranjang)
             cart.forEach((item, index) => {
@@ -919,49 +939,67 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
             form.submit();
         }
 
+        // ... (fungsi showReceipt yang sudah direvisi untuk tampilan pasaran) ...
         function showReceipt(transaction) {
+            // Format tanggal untuk struk: DD-MM-YYYY HH:MM
+            const transactionDate = new Date(transaction.date);
+            const formattedDate = transactionDate.toLocaleDateString('id-ID', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+
             const receiptHtml = `
-                <div class="receipt" id="printableReceipt">
-                    <div class="receipt-header">
-                        <h2>🧺 LAUNDRY RECEIPT</h2>
-                        <p>ID: ${transaction.id}</p>
-                        <p>Tanggal: ${new Date(transaction.date).toLocaleString('id-ID')}</p>
+                <div class="receipt-paper" id="printableReceipt">
+                    <div class="receipt-header-passaran">
+                        <h2>🧺 LAUNDRY SIDDIQ</h2>
+                        <p>Jl. Contoh No. 123, Jakarta</p>
+                        <p>Telp: (021) 12345678</p>
+                        <p>----------------------------------</p>
+                        <p>ID Transaksi: ${transaction.id}</p>
+                        <p>Tanggal: ${formattedDate}</p>
                     </div>
 
-                    <div style="margin-bottom: 20px;">
-                        <strong>Pelanggan:</strong><br>
-                        ${transaction.customer.name}<br>
-                        ${transaction.customer.phone}<br>
-                        ${transaction.customer.address}
+                    <div style="margin-bottom: 15px;">
+                        <div class="receipt-section-title">INFO PELANGGAN</div>
+                        <p>${transaction.customer.name}</p>
+                        <p>${transaction.customer.phone}</p>
+                        <p>${transaction.customer.address}</p>
                     </div>
 
-                    <div style="margin-bottom: 20px;">
-                        <strong>Detail Pesanan:</strong><br>
+                    <div style="margin-bottom: 15px;">
+                        <div class="receipt-section-title">DETAIL PESANAN</div>
                         ${transaction.items.map(item => {
                             const unit = item.service.includes('Sepatu') ? 'pasang' :
                                          item.service.includes('Karpet') ? 'm²' : 'kg';
-                            const formattedWeight = item.weight % 1 === 0 ?
-                                                    item.weight.toString() :
-                                                    item.weight.toFixed(1).replace('.', ',');
+                            const formattedWeight = item.weight % 1 === 0 ? item.weight.toString() : item.weight.toFixed(1).replace('.', ',');
                             return `
-                            <div class="receipt-item">
-                                <span>${item.service} (${formattedWeight} ${unit})</span>
-                                <span>Rp ${item.subtotal.toLocaleString()}</span>
-                            </div>
+                                <div class="receipt-item-passaran">
+                                    <span class="item-name">${item.service}</span>
+                                    <span class="item-qty-price">${formattedWeight} ${unit} @Rp ${item.price.toLocaleString('id-ID')}</span>
+                                </div>
+                                
                             `;
                         }).join('')}
-                    </div>
+                        ${transaction.description ? `
+                        <div class="receipt-item-passaran" style="margin-top: 10px;">
+                            <span class="item-name" style="font-weight: bold;">Catatan:</span>
+                            <span style="text-align: right; word-break: break-word;">${transaction.description}</span>
+                        </div>
+                        ` : ''}
+                        </div>
 
-                    <div class="receipt-total">
-                        <div class="receipt-item">
+                    <div class="receipt-summary-passaran">
+                        <div class="summary-row">
                             <span>TOTAL:</span>
-                            <span>Rp ${transaction.total.toLocaleString()}</span>
+                            <span>Rp ${transaction.total.toLocaleString('id-ID')}</span>
                         </div>
                     </div>
 
-                    <div style="text-align: center; margin-top: 20px;">
+                    <div class="receipt-footer-passaran">
+                        <p>----------------------------------</p>
                         <p>Terima kasih atas kepercayaan Anda!</p>
-                        <p>Barang akan siap dalam 1-2 hari kerja</p>
+                        <p>Barang siap dalam 1-2 hari kerja.</p>
+                        <p>Simpan struk ini sebagai bukti pengambilan.</p>
                     </div>
                 </div>
 
@@ -975,39 +1013,80 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
             document.getElementById('transactionModal').style.display = 'block';
         }
 
+        // ... (fungsi printReceipt yang sudah direvisi) ...
         function printReceipt() {
-            const originalBodyHtml = document.body.innerHTML;
-            const receiptContent = document.getElementById('printableReceipt').outerHTML;
+            const originalBodyHtml = document.body.innerHTML; // Simpan isi body asli
+            const receiptContent = document.getElementById('printableReceipt').outerHTML; // Ambil HTML receipt
 
-            const printWindow = window.open('', '_blank');
-            printWindow.document.open();
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Cetak Struk</title>
-                    <style>
-                        body { font-family: 'Courier New', monospace; margin: 0; padding: 0; }
-                        .receipt { width: 80mm; margin: 10mm auto; padding: 5mm; border: 1px solid #ccc; }
-                        .receipt-header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 10px; }
-                        .receipt-item { display: flex; justify-content: space-between; margin-bottom: 2px; }
-                        .receipt-total { border-top: 2px solid #333; padding-top: 5px; margin-top: 5px; font-weight: bold; }
-                        @media print {
-                            body { margin: 0; padding: 0; }
-                            .receipt { width: auto; margin: 0; box-shadow: none; border: none; padding: 10mm; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${receiptContent}
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-            printWindow.close();
+            // Ganti isi body dengan hanya konten receipt
+            document.body.innerHTML = receiptContent;
+
+            // Tambahkan sedikit CSS untuk print jika diperlukan (misalnya menghilangkan margin/padding default browser)
+            const printStyles = `
+                @media print {
+                    body {
+                        margin: 0;
+                        padding: 0;
+                    }
+                    .receipt-paper {
+                        width: 100% !important;
+                        margin: 0 !important;
+                        box-shadow: none !important;
+                        border: none !important;
+                        padding: 5mm !important; /* Kurangi padding untuk cetak, printer biasanya punya margin sendiri */
+                    }
+                    .btn { /* Sembunyikan tombol di struk yang dicetak */
+                        display: none !important;
+                    }
+                    /* Pastikan elemen modal dan kontennya terlihat saat mencetak */
+                    .modal {
+                        visibility: visible !important;
+                        position: static !important;
+                        width: auto !important;
+                        height: auto !important;
+                        background: none !important;
+                        backdrop-filter: none !important;
+                    }
+                    .modal-content {
+                        visibility: visible !important;
+                        position: static !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        width: auto !important;
+                        max-width: none !important;
+                        box-shadow: none !important;
+                        background: none !important;
+                        max-height: none !important;
+                        overflow: visible !important;
+                        border-radius: 0 !important;
+                        border: none !important;
+                    }
+                }
+            `;
+            const styleElement = document.createElement('style');
+            styleElement.innerHTML = printStyles;
+            // Menambahkan atribut data-print untuk identifikasi dan penghapusan nanti
+            styleElement.setAttribute('data-print', 'true'); 
+            document.head.appendChild(styleElement);
+
+
+            window.print(); // Cetak hanya isi yang ada di body
+
+            // Setelah mencetak, kembalikan isi body ke kondisi semula
+            // Menggunakan setTimeout untuk memberi waktu browser menyelesaikan dialog cetak
+            setTimeout(() => {
+                document.body.innerHTML = originalBodyHtml;
+                // Hapus style tambahan untuk print setelah dikembalikan
+                const addedStyle = document.querySelector('style[data-print="true"]');
+                if (addedStyle) {
+                    document.head.removeChild(addedStyle);
+                }
+            }, 500); // Penundaan singkat untuk kompatibilitas browser
+
+            // closeModal(); // Anda mungkin ingin modal tetap terbuka setelah cetak, atau menutupnya otomatis.
+                           // Jika ingin menutup, uncomment baris ini.
         }
+
 
         function updateTransactionHistory() {
             const historyContainer = document.getElementById('transactionHistory');
@@ -1028,7 +1107,7 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
                     }).join(', ')}</p>
                     <p>💰 Rp ${transaction.total.toLocaleString()}</p>
                     <p>📅 ${new Date(transaction.date).toLocaleString('id-ID')}</p>
-                    <span class="status-badge status-${transaction.status}">${getStatusText(transaction.status)}</span>
+                    <span class="status-badge status-${transaction.status}">Status : ${getStatusText(transaction.status)} </span>
                 </div>
             `).join('');
 
@@ -1223,7 +1302,7 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
             const statusHtml = `
                 <h2>📝 Update Status Transaksi</h2>
                 <h3>${transaction.id} - ${transaction.customer.name}</h3>
-                <p>Status saat ini: <span class="status-badge status-${transaction.status}">${getStatusText(transaction.status)}</span></p>
+                <p>Status saat ini: <span class="status-badge status-${transaction.status}">Status : ${getStatusText(transaction.status)}</span></p>
 
                 <div class="form-group">
                     <label>Pilih Status Baru:</label>
@@ -1286,7 +1365,6 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
         function closeModal(shouldReload = false) {
             document.getElementById('transactionModal').style.display = 'none';
             if (shouldReload) {
-                // Opsional: Reload halaman untuk memastikan data terbaru dari DB
                 window.location.href = "?page=transaksi";
             }
         }
@@ -1312,7 +1390,7 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
             window.onclick = function(event) {
                 const modal = document.getElementById('transactionModal');
                 if (event.target === modal) {
-                    closeModal(); // Tidak reload jika klik di luar modal (hanya tutup)
+                    closeModal();
                 }
             };
 
@@ -1365,7 +1443,6 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
 
             // Cek apakah ada data transaksi baru dari PHP setelah submit
             if (typeof NEW_TRANSACTION_DATA !== 'undefined' && NEW_TRANSACTION_DATA) {
-                // Tambahkan atau perbarui transaksi di array `transactions` lokal
                 const existingTransactionIndex = transactions.findIndex(t => t.db_id === NEW_TRANSACTION_DATA.db_id);
                 if (existingTransactionIndex === -1) {
                     transactions.push(NEW_TRANSACTION_DATA);
@@ -1373,14 +1450,12 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
                     transactions[existingTransactionIndex] = NEW_TRANSACTION_DATA;
                 }
 
-                // Urutkan ulang transaksi berdasarkan tanggal terbaru agar history selalu menampilkan yang terbaru
                 transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-                // Tampilkan struk untuk transaksi yang baru disimpan (yang dari PHP)
                 showReceipt(NEW_TRANSACTION_DATA);
-                clearCart(); // Bersihkan keranjang setelah transaksi ditampilkan di struk
-                updateTransactionHistory(); // Perbarui riwayat
-                updateStats(); // Perbarui statistik
+                clearCart();
+                updateTransactionHistory();
+                updateStats();
             }
         });
     </script>

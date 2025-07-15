@@ -20,11 +20,12 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
             <thead>
                 <tr>
                     <th>No</th>
-                    <th>Nomor Order</th>
+                    <th>Kode Transaksi</th>
                     <th>Nama Pelanggan</th>
-                    <th>Order Start Date</th>
-                    <th>Order Status</th>
-                    <th>Action</th>
+                        <th>Catatan</th>
+                    <th>Tanggal Dipesan</th>
+                    <th>Status Pemesanan</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,13 +36,14 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
                         <td><?= $no++ ?></td>
                         <td><?= isset($rowData['order_code']) ? $rowData['order_code'] : '-' ?></td>
                         <td><?= isset($rowData['customer_name']) ? $rowData['customer_name'] : '-' ?></td>
+                          <td><?= isset($rowData['deskripsi']) ? $rowData['deskripsi'] : '-' ?></td>
                         <td><?= isset($rowData['order_date']) ? $rowData['order_date'] : '-' ?></td>
                         <?php $statusOrder = getOrderStatus($rowData['order_status']) ?>
                         <td><?= $statusOrder ?></td>
                         <td>
                             <a href="?page=add-order&view=<?php echo $rowData['id'] ?>">
                                 <button class="btn btn-secondary btn-sm">
-                                    <i class="tf-icon bx bx-show bx-22px">View</i>
+                                    <i class="tf-icon bx bx-show bx-22px">Info Detail</i>
                                 </button>
                                 <a href="?page=pickup">
                                     <button class="btn btn-secondary btn-sm">
@@ -50,7 +52,7 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
                                     <a onclick="return confirm ('Apakah anda yakin akan menghapus data ini?')"
                                         href="?page=add-order&delete=<?php echo $rowData['id'] ?>">
                                         <button class="btn btn-danger btn-sm">
-                                            <i class="tf-icon bx bx-trash bx-22px">Delete</i>
+                                            <i class="tf-icon bx bx-trash bx-22px">Hapus</i>
                                         </button>
                                     </a>
                         </td>

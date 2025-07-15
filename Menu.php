@@ -29,7 +29,7 @@ if (empty($_SESSION['id'])) {
 <html lang="en">
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>🧺 Laundry Om Ruben</title>
+    <title>🧺LaundryApp Sodik</title>
     <link rel="shortcut icon" type="image/png" href="" />
     <meta
       content="width=device-width, initial-scale=1.0, shrink-to-fit=no"

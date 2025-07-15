@@ -6,7 +6,7 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
 ?>
 <div class="card shadow">
     <div class="card-header">
-        <h3>Data Pickup</h3>
+        <h3>Data Pengambilan Barang</h3>
     </div>
     <div class="card-body">
         <?php include 'admin/controller/alert-data-crud.php' ?>
@@ -14,13 +14,13 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
             <thead>
                 <tr>
                     <th>No</th>
-                    <th>Order Code</th>
-                    <th>Customer Name</th>
-                    <th>Order Start Date</th>
-                    <th>Order End Date</th>
-                    <th>Pickup Date</th>
-                    <th>Order Status</th>
-                    <th>Action</th>
+                    <th>Kode Transaksi</th>
+                    <th>Nama Pelanggan</th>
+                    <th>Waktu diPesan</th>
+                    <th>Pesanan Selesai</th>
+                    <th>Waktu Pengambilan Barang</th>
+                    <th>Status Pesanan</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -40,23 +40,23 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
                             <a href="?page=add-pickup&view=<?php echo $rowData['id'] ?>">
                                 <button class="btn btn-secondary btn-sm">
                                     <?php if ($rowData['order_status'] == 0) : ?>
-                                        <i class="tf-icon bx bx-package bx-22px">View</i>
+                                       Info Detail & Pembayaran
                                     <?php elseif ($rowData['order_status'] == 1) : ?>
-                                        <i class="tf-icon bx bx-show bx-22px">View</i>
+                                        Info Detail
                                     <?php endif ?>
                                 </button>
                             </a>
                             <?php if ($rowData['order_status'] == 1) : ?>
                                 <a href="admin/content/misc/print.php?order=<?= $rowData['id'] ?>" target="_blank">
                                     <button class="btn btn-secondary btn-sm">
-                                        <i class="tf-icon bx bx-printer bx-22px">Print</i>
+                                      Print
                                     </button>
                                 </a>
                             <?php endif ?>
                             <a onclick="return confirm ('Apakah anda yakin akan menghapus data ini?')"
                                 href="?page=add-pickup&delete=<?php echo $rowData['id'] ?>">
                                 <button class="btn btn-danger btn-sm">
-                                    <i class="tf-icon bx bx-trash bx-22px">Delete</i>
+                                   Hapus
                                 </button>
                             </a>
                         </td>
