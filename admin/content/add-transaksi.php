@@ -14,7 +14,7 @@ if (isset($_POST['add_order'])) {
     $order_end_date = $_POST['order_end_date'];
     $order_status = $_POST['order_status'];
     $total_price = $_POST['total_price'];
-    
+
     // --- PENAMBAHAN PHP: Ambil deskripsi dari POST ---
     $deskripsi = isset($_POST['deskripsi']) ? $_POST['deskripsi'] : null; // Ambil nilai deskripsi
     // --- AKHIR PENAMBAHAN PHP ---
@@ -163,7 +163,7 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Informasi Laundry - POS</title>
-   <style>
+    <style>
         /* CSS Anda yang sudah ada di sini */
         * {
             margin: 0;
@@ -829,7 +829,7 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
             const seconds = date.getSeconds().toString().padStart(2, '0');
             const randomString = Math.random().toString(36).substring(2, 6).toUpperCase();
 
-            return `TRX-${year}${month}${day}-${hours}${minutes}${seconds}-${randomString}`;
+            return `LS-${year}${month}${day}-${hours}${minutes}${seconds}`;
         }
 
 
@@ -944,8 +944,11 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
             // Format tanggal untuk struk: DD-MM-YYYY HH:MM
             const transactionDate = new Date(transaction.date);
             const formattedDate = transactionDate.toLocaleDateString('id-ID', {
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
             });
 
             const receiptHtml = `
@@ -1066,7 +1069,7 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
             const styleElement = document.createElement('style');
             styleElement.innerHTML = printStyles;
             // Menambahkan atribut data-print untuk identifikasi dan penghapusan nanti
-            styleElement.setAttribute('data-print', 'true'); 
+            styleElement.setAttribute('data-print', 'true');
             document.head.appendChild(styleElement);
 
 
@@ -1084,7 +1087,7 @@ while ($row = mysqli_fetch_assoc($queryAllTransactions)) {
             }, 500); // Penundaan singkat untuk kompatibilitas browser
 
             // closeModal(); // Anda mungkin ingin modal tetap terbuka setelah cetak, atau menutupnya otomatis.
-                           // Jika ingin menutup, uncomment baris ini.
+            // Jika ingin menutup, uncomment baris ini.
         }
 
 

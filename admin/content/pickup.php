@@ -40,7 +40,7 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
                             <a href="?page=add-pickup&view=<?php echo $rowData['id'] ?>">
                                 <button class="btn btn-secondary btn-sm">
                                     <?php if ($rowData['order_status'] == 0) : ?>
-                                       Info Detail & Pembayaran
+                                        Info Detail & Pembayaran
                                     <?php elseif ($rowData['order_status'] == 1) : ?>
                                         Info Detail
                                     <?php endif ?>
@@ -49,14 +49,14 @@ $queryData = mysqli_query($connection, "SELECT trans_order.*, customer.customer_
                             <?php if ($rowData['order_status'] == 1) : ?>
                                 <a href="admin/content/misc/print.php?order=<?= $rowData['id'] ?>" target="_blank">
                                     <button class="btn btn-secondary btn-sm">
-                                      Print
+                                        <i class="fa fa-print">Print</i>
                                     </button>
                                 </a>
                             <?php endif ?>
                             <a onclick="return confirm ('Apakah anda yakin akan menghapus data ini?')"
                                 href="?page=add-pickup&delete=<?php echo $rowData['id'] ?>">
                                 <button class="btn btn-danger btn-sm">
-                                   Hapus
+                                    Hapus
                                 </button>
                             </a>
                         </td>

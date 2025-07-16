@@ -6,7 +6,7 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
 
 ?>
 
-<div class="sidebar" data-background-color="dark">
+<div class="sidebar sidebar-style-2" data-background-color="dark">
     <div class="sidebar-logo">
         <div class="logo-header" data-background-color="dark">
             <a href="?page=dashboard" class="logo">
@@ -29,7 +29,7 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
         <div class="sidebar-content">
             <ul class="nav nav-secondary">
                 <?php if ($dataNavbar['id_level'] == 1) : ?>
-                    <li class="nav-item">
+                    <li class="nav-item active submenu">
                         <a data-bs-toggle="collapse" href="#dashboardMenu">
                             <i class="fas fa-home"></i>
                             <p>Dashboard</p>
@@ -50,16 +50,17 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
                         <span class="sidebar-mini-icon">
                             <i class="fa fa-ellipsis-h"></i>
                         </span>
-                        <h4 class="text-section">Master Data</h4>
+                        <h4 class="text-section">MASTER DATA</h4>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item active submenu">
                         <a data-bs-toggle="collapse" href="#adminMenu">
                             <i class="fas fa-layer-group"></i>
-                            <p>Admin</p>
+                            <p><?= isset($dataNavbar['username']) ? $dataNavbar['username'] : '' ?></p>
                             <span class="caret"></span>
                         </a>
                         <div class="collapse" id="adminMenu">
                             <ul class="nav nav-collapse">
+                                <!-- Fungsi utamanya adalah untuk memberikan umpan balik visual kepada pengguna tentang di bagian mana mereka berada di dalam struktur navigasi situs Anda. -->
                                 <li <?= (isset($_GET['page']) && in_array($_GET['page'], ['user', 'add-user'])) ? 'class="active"' : '' ?>>
                                     <a href="?page=user"><span class="sub-item">User</span></a>
                                 </li>
@@ -67,7 +68,7 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
                                     <a href="?page=level"><span class="sub-item">Level</span></a>
                                 </li>
                                 <li <?= (isset($_GET['page']) && in_array($_GET['page'], ['customer', 'add-customer'])) ? 'class="active"' : '' ?>>
-                                    <a href="?page=customer"><span class="sub-item">Pelanggan</span></a>
+                                    <a href="?page=customer"><span class="sub-item">Customer</span></a>
                                 </li>
                                 <li <?= (isset($_GET['page']) && in_array($_GET['page'], ['service', 'add-service'])) ? 'class="active"' : '' ?>>
                                     <a href="?page=service"><span class="sub-item">Service</span></a>
@@ -76,10 +77,10 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
                         </div>
                     </li>
                 <?php elseif ($dataNavbar['id_level'] == 2) : ?>
-                    <li class="nav-item">
+                    <li class="nav-item active submenu">
                         <a data-bs-toggle="collapse" href="#operatorMenu">
                             <i class="fas fa-th-list"></i>
-                            <p>Operator</p>
+                            <p><?= isset($dataNavbar['username']) ? $dataNavbar['username'] : '' ?></p>
                             <span class="caret"></span>
                         </a>
                         <div class="collapse" id="operatorMenu">
@@ -91,16 +92,33 @@ $dataNavbar = mysqli_fetch_assoc($queryNavbar);
                         </div>
                     </li>
                 <?php elseif ($dataNavbar['id_level'] == 3) : ?>
-                    <li class="nav-item">
+                    <li class="nav-item active submenu">
                         <a data-bs-toggle="collapse" href="#pimpinanMenu">
                             <i class="fas fa-file-contract"></i>
-                            <p>Pimpinan</p>
+                            <p><?= isset($dataNavbar['username']) ? $dataNavbar['username'] : '' ?></p>
                             <span class="caret"></span>
                         </a>
                         <div class="collapse" id="pimpinanMenu">
                             <ul class="nav nav-collapse">
                                 <li <?= (isset($_GET['page']) && in_array($_GET['page'], ['report', 'add-report'])) ? 'class="active"' : '' ?>>
                                     <a href="?page=report"><span class="sub-item">Report</span></a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                <?php elseif ($dataNavbar['id_level'] !== 3) : ?>
+                    <li class="nav-item">
+                        <a data-bs-toggle="collapse" href="#pimpinanMenu">
+                            <i class="fas fa-file-contract"></i>
+                            <p><?= isset($dataNavbar['username']) ? $dataNavbar['username'] : '' ?></p>
+                            <span class="caret"></span>
+                        </a>
+                        <div class="collapse" id="pimpinanMenu">
+                            <ul class="nav nav-collapse">
+                                <li <?= !isset($_GET['page']) || ($_GET['page'] == 'dashboard') ? 'class="active"' : '' ?>>
+                                    <a href="?page=dashboard">
+                                        <span class="sub-item">Dashboard</span>
+                                    </a>
                                 </li>
                             </ul>
                         </div>

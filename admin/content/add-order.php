@@ -20,10 +20,9 @@ if (isset($_POST['add_order'])) {
     $id_customer = $_POST['id_customer'];
     $order_code = $_POST['order_code'];
     $order_date = $_POST['order_date'];
-    $order_end_date = $_POST['order_end_date'];
     $order_status = $_POST['order_status']; // <-- Nilai ini sekarang pasti terkirim
     $total_price = $_POST['total_price'];
-    
+
     // Insert ke tabel utama
     $insert_trans_order = mysqli_query($connection, "INSERT INTO trans_order (id_customer, order_code, order_date, order_end_date, order_status, total_price) VALUES ('$id_customer', '$order_code', '$order_date', '$order_end_date', '$order_status', '$total_price')");
     $trans_order_id = mysqli_insert_id($connection);
@@ -37,11 +36,10 @@ if (isset($_POST['add_order'])) {
             mysqli_query($connection, "INSERT INTO trans_order_detail (id_order, id_service, qty, subtotal) VALUES ('$trans_order_id', '$id_service', '$qty', '$subtotal')");
         }
     }
-    
+
     // Alihkan kembali ke halaman daftar order dengan notifikasi sukses
     header("Location:?page=order&add=success");
     die;
-
 } else if (isset($_GET['view'])) { // Logika untuk MELIHAT detail
     $idView = $_GET['view'];
     $queryView = mysqli_query($connection, "SELECT trans_order.*, customer.customer_name, customer.phone, customer.address FROM trans_order LEFT JOIN customer ON trans_order.id_customer = customer.id WHERE trans_order.id = '$idView'");
@@ -49,7 +47,6 @@ if (isset($_POST['add_order'])) {
 
     $orderViewID = $rowView['id'];
     $queryOrderList = mysqli_query($connection, "SELECT trans_order_detail.*, type_of_service.* FROM trans_order_detail LEFT JOIN type_of_service ON trans_order_detail.id_service = type_of_service.id WHERE trans_order_detail.id_order = '$orderViewID'");
-
 } else if (isset($_GET['delete'])) { // Logika untuk MENGHAPUS
     $idDelete = $_GET['delete'];
     mysqli_query($connection, "DELETE FROM trans_order WHERE id='$idDelete'");
@@ -85,16 +82,13 @@ $queryCustomer = mysqli_query($connection, "SELECT * FROM customer");
                                 <th scope="row">Waktu di Pesan</th>
                                 <td><?= isset($rowView['order_date']) ? $rowView['order_date'] : '-' ?></td>
                             </tr>
-                            <tr>
-                                <th scope="row">Pesanan Selesai</th>
-                                <td><?= isset($rowView['order_end_date']) ? $rowView['order_end_date'] : '-' ?></td>
-                            </tr>
+
                             <tr>
                                 <th scope="row">Status Pemesanan</th>
                                 <?php $status = getOrderStatus($rowView['order_status']) ?>
                                 <td><?= $status ?></td>
                             </tr>
-                              <tr>
+                            <tr>
                                 <th scope="row">Catatan</th>
                                 <td><?= isset($rowView['deskripsi']) ? $rowView['deskripsi'] : '-' ?></td>
                             </tr>
@@ -130,7 +124,7 @@ $queryCustomer = mysqli_query($connection, "SELECT * FROM customer");
         </div>
     </div>
 
-      <div class="card shadow mt-3">
+    <div class="card shadow mt-3">
         <div class="card-header">
             <h4>List Pemesanan</h4>
         </div>
@@ -172,14 +166,16 @@ $queryCustomer = mysqli_query($connection, "SELECT * FROM customer");
             </div>
         </div>
     </div>
-    <?php else : ?>
-        
+<?php else : ?>
+
     <form action="" method="post">
         <input type="hidden" name="order_status" value="0">
 
         <div class="card shadow">
-             <div class="card-header"><h3>Tambah Pesanan</h3></div>
-             <div class="card-body">
+            <div class="card-header">
+                <h3>Tambah Pesanan</h3>
+            </div>
+            <div class="card-body">
                 <div class="row">
                     <div class="col-sm-6 mb-3">
                         <label class="form-label">Kode Transaksi</label>
@@ -203,7 +199,7 @@ $queryCustomer = mysqli_query($connection, "SELECT * FROM customer");
                         <input type="date" class="form-control" name="order_end_date" required>
                     </div>
                 </div>
-             </div>
+            </div>
         </div>
 
         <div class="card shadow mt-3">
@@ -212,17 +208,17 @@ $queryCustomer = mysqli_query($connection, "SELECT * FROM customer");
                     <div class="col-sm-6 mb-3">
                         <label class="form-label">Layanan</label>
                         <select name="id_service" class="form-control" id="selected_service">
-                        <option value="">-- Pilih Jenis Layanan --</option>
-                        <?php 
-                        // Reset pointer query untuk looping lagi jika diperlukan di tempat lain
-                        mysqli_data_seek($queryService, 0); 
-                        while ($rowService = mysqli_fetch_assoc($queryService)): 
-                        ?>
-                            <option value="<?= $rowService['id'] ?>" data-price="<?= $rowService['price'] ?>">
-                                <?= $rowService['service_name'] ?>
-                            </option>
-                        <?php endwhile ?>
-                    </select>
+                            <option value="">-- Pilih Jenis Layanan --</option>
+                            <?php
+                            // Reset pointer query untuk looping lagi jika diperlukan di tempat lain
+                            mysqli_data_seek($queryService, 0);
+                            while ($rowService = mysqli_fetch_assoc($queryService)):
+                            ?>
+                                <option value="<?= $rowService['id'] ?>" data-price="<?= $rowService['price'] ?>">
+                                    <?= $rowService['service_name'] ?>
+                                </option>
+                            <?php endwhile ?>
+                        </select>
                     </div>
                     <div class="col-sm-6 mb-3">
                         <label class="form-label">Berat/Kg</label>
@@ -245,7 +241,7 @@ $queryCustomer = mysqli_query($connection, "SELECT * FROM customer");
                         </tr>
                     </thead>
                     <tbody id="order_table">
-                        </tbody>
+                    </tbody>
                     <tfoot>
                         <tr>
                             <td colspan="3" align="right"><strong>Total Semua</strong></td>
@@ -263,4 +259,4 @@ $queryCustomer = mysqli_query($connection, "SELECT * FROM customer");
             </div>
         </div>
     </form>
-    <?php endif?>
+<?php endif ?>

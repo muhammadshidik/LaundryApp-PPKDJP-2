@@ -38,7 +38,7 @@ $queryLevel = mysqli_query($connection, "SELECT * FROM level");
 
 <div class="card shadow">
     <div class="card-header">
-        <h3>My Profile</h3>
+        <h3>Profil Saya </h3>
     </div>
     <div class="card-body">
         <?php if (isset($_GET['edit']) && $_GET['edit'] == 'success'): ?>

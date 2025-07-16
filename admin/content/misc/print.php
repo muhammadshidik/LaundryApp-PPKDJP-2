@@ -1,6 +1,16 @@
 <?php
 include '../../controller/koneksi.php';
-
+function getOrderStatus($statusCode)
+{
+    switch ($statusCode) {
+        case 0:
+            return "Baru"; // Atau "Menunggu Pembayaran"
+        case 1:
+            return "Sudah"; // Atau "Pembayaran Lunas"
+        default:
+            return "Status Tidak Diketahui";
+    }
+}
 $id = isset($_GET['order']) ? $_GET['order'] : '';
 $queryOrder = mysqli_query($connection, "SELECT trans_order.*, customer.customer_name , trans_laundry_pickup.pickup_date 
 FROM trans_order 
@@ -145,25 +155,29 @@ WHERE id_order = '$id'");
     <div class="struct">
         <div class="struct-header">
             <img src="" alt="" width="50px">
-            <p><strong>Laundry App</strong></p>
+            <p><strong>Laundry PPKD JP </strong></p>
+            <br>
             <p>Jl.Tb. Simatupang, RT.011, RW.002, Kel. Susukan, Kec. Ciracas, Jakarta Timur</p>
-            <p>0818-0818-0818</p>
+            <p>+62896-8475-8768</p>
         </div>
         <br>
         <div class="order-details">
-            <p><strong>Customer Name:</strong> <?= $dataOrder['customer_name'] ?></p>
-            <p><strong>Order Code:</strong> <?= $dataOrder['order_code'] ?></p>
-            <p><strong>Order Date:</strong> <?= $dataOrder['order_date'] ?></p>
-            <p><strong>Pickup Date:</strong> <?= $dataOrder['pickup_date'] ?></p>
+            <p><strong>Nama Pelanggan:</strong> <?= $dataOrder['customer_name'] ?></p>
+            <p><strong>Kode Transaksi:</strong> <?= $dataOrder['order_code'] ?></p>
+            <p><strong>Waktu Diorder:</strong> <?= $dataOrder['order_date'] ?></p>
+            <p><strong>Waktu Pengambilan:</strong> <?= $dataOrder['pickup_date'] ?></p>
+            <p><strong>Status Pembayaran:</strong> <?php $statusOrder = getOrderStatus($dataOrder['order_status']) ?><?= $statusOrder ?> </p>
+            <td></td>
+
         </div>
         <br>
         <div class="struct-body">
             <table>
                 <thead>
                     <tr>
-                        <th>Service</th>
-                        <th>Price</th>
-                        <th>Qty</th>
+                        <th>Jenis Cuci</th>
+                        <th>Harga</th>
+                        <th>Berat/Kg</th>
                         <th>Sub Total</th>
                     </tr>
                 </thead>
@@ -179,15 +193,15 @@ WHERE id_order = '$id'");
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="3" align="right"><strong>Total Price</strong></td>
+                        <td colspan="3" align="right"><strong>Total Harga</strong></td>
                         <td><?= 'Rp ' . number_format($dataOrder['total_price'], 2, ',', ',') ?></td>
                     </tr>
                     <tr>
-                        <td colspan="3" align="right"><strong>Amount Paid</strong></td>
+                        <td colspan="3" align="right"><strong>Yang Dibayar</strong></td>
                         <td><?= 'Rp ' . number_format($dataOrder['order_pay'], 2, ',', ',') ?></td>
                     </tr>
                     <tr>
-                        <td colspan="3" align="right"><strong>Amount Change</strong></td>
+                        <td colspan="3" align="right"><strong>Kembalian</strong></td>
                         <td><?= 'Rp ' . number_format($dataOrder['order_change'], 2, ',', ',') ?></td>
                     </tr>
                 </tfoot>
@@ -195,8 +209,8 @@ WHERE id_order = '$id'");
         </div>
         <br>
         <div class="struct-footer">
-            <p><strong>Thank You for Your Visit!</strong></p>
-            <p><i>"Want to be clean? Just wash it!"</i></p>
+            <p><strong>Terimakasih Yah Sudah Mampir </strong></p>
+            <p><i>"Berani kotor itu baik!"</i></p>
         </div>
     </div>
 

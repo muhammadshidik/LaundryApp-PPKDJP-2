@@ -169,7 +169,7 @@ $queryCustomer = mysqli_query($connection,  "SELECT * FROM customer");
                 <a href="?page=report" class="btn btn-secondary">Back</a>
                 <?php if ($rowView['order_status'] == 1): ?>
                     <a href="content/misc/print.php?order=<?= $_GET['view'] ?>" target="_blank"
-                        class="btn btn-primary">Print</a>
+                        class="btn btn-primary"><i class="fa fa-print">Print</i></a>
                 <?php endif ?>
             </div>
         </div>

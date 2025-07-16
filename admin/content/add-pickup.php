@@ -60,10 +60,6 @@ $queryCustomer = mysqli_query($connection,  "SELECT * FROM customer");
                             <td><?= isset($rowView['order_date']) ? $rowView['order_date'] : '-' ?></td>
                         </tr>
                         <tr>
-                            <th scope="row">Pesanan Selesai</th>
-                            <td><?= isset($rowView['order_end_date']) ? $rowView['order_end_date'] : '-' ?></td>
-                        </tr>
-                        <tr>
                             <th scope="row">Status Pesanan</th>
                             <?php $status = getOrderStatus($rowView['order_status']) ?>
                             <td><?= $status ?></td>
@@ -183,7 +179,7 @@ $queryCustomer = mysqli_query($connection,  "SELECT * FROM customer");
                     <button class="btn btn-primary" name="pickup" type="submit">Bayar</button>
                 <?php elseif ($rowView['order_status'] == 1): ?>
                     <a href="admin/content/misc/print.php?order=<?= $_GET['view'] ?>" target="_blank"
-                        class="btn btn-primary">Print</a>
+                        class="btn btn-primary"><i class="fa fa-print"></i></a>
                 <?php endif ?>
             </div>
         </div>

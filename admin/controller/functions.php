@@ -44,14 +44,6 @@ function loginValidation()
 // Fungsi untuk mengubah nilai status order menjadi label HTML
 // Letakkan fungsi ini di file koneksi.php atau file fungsi utama Anda
 
-
-// ... ini adalah kode koneksi database Anda yang sudah ada ...
-// ... mysqli_connect(...) ...
-
-
-// ===============================================================
-// PASTE FUNGSI LENGKAP INI DI DALAM FILE koneksi.php ANDA
-// ===============================================================
 function getOrderStatus($status_code)
 {
     switch ($status_code) {
@@ -59,10 +51,6 @@ function getOrderStatus($status_code)
             return '<span class="badge bg-primary">Belum Bayar</span>';
         case 1:
             return '<span class="badge bg-info">Lunas</span>';
-        case 2:
-            return '<span class="badge bg-info">Siap Diambil</span>';
-        case 3:
-            return '<span class="badge bg-info">Selesai</span>';
         default:
             return '<span class="badge bg-secondary">Tidak Diketahui</span>';
     }
